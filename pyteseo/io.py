@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 
-from pathlib import Path, PosixPath
+from pathlib import Path, PosixPath, WindowsPath
 from typing import Tuple
 
 import pandas as pd
@@ -27,7 +27,9 @@ __all__ = [
 
 
 # 1. DOMAIN
-def read_grid(path: str | PosixPath, nan_value: int | float = -999) -> pd.DataFrame:
+def read_grid(
+    path: str | PosixPath | WindowsPath, nan_value: int | float = -999
+) -> pd.DataFrame:
     """Read TESEO grid-file to pandas DataFrame
 
     Args:
@@ -429,7 +431,7 @@ def read_particles_results(
         for file in files
     ]
 
-    return pd.concat(dfs)
+    return pd.concat(dfs).reset_index(drop=True)
 
 
 def read_properties_results(
@@ -466,7 +468,7 @@ def read_properties_results(
 
         dfs.append(df_)
 
-    return pd.concat(dfs)
+    return pd.concat(dfs).reset_index(drop=True)
 
 
 def read_grids_results(
@@ -518,7 +520,7 @@ def read_grids_results(
     for spill_id, df_spill in df.groupby("spill_id (-)"):
         minimum_grid = get_minimum_grid(fullgrid, df_spill)
         dfs.append(add_inactive_cells(df_spill, minimum_grid, spill_id))
-    return pd.concat(dfs)
+    return pd.concat(dfs).reset_index(drop=True)
 
 
 def add_inactive_cells(
