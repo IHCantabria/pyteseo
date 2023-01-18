@@ -25,8 +25,7 @@ def export_particles(
     allowed_formats = ["csv", "json", "geojson"]
     exported_files = []
 
-    output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
-
+    output_dir = Path(output_dir)
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(
@@ -81,8 +80,7 @@ def export_properties(
     allowed_formats = ["csv", "json"]
     exported_files = []
 
-    output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
-
+    output_dir = Path(output_dir)
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(
@@ -130,8 +128,7 @@ def export_grids(
     allowed_formats = ["csv", "json", "nc"]
     exported_files = []
 
-    output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
-
+    output_dir = Path(output_dir)
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(
