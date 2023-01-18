@@ -11,11 +11,11 @@ tmp/
 tmp_*/
 dist/
 docs/_build
+.vscode/
 
 # Files
 *.nc
 *.csv
-*.json
 *.geojson
 *.pyc
 *.log
