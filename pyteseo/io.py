@@ -8,22 +8,24 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
+from pyteseo.__init__ import DEF_NAMES
+
 # NOTE - Restricts the loading when from "pyteseo.io import *"" to the names defined here but it are loaded in pytest.CHECK BEHAVIOUR
 # NOTE - Restricts what is documented by Sphinx (!!!)
 
-__all__ = [
-    "read_grid",
-    "read_coastline",
-    "write_grid",
-    "write_coastline",
-    "read_currents",
-    "read_winds",
-    "write_currents",
-    "write_winds",
-    "read_particles_results",
-    "read_properties_results",
-    "read_grids_results",
-]
+# __all__ = [
+#     "read_grid",
+#     "read_coastline",
+#     "write_grid",
+#     "write_coastline",
+#     "read_currents",
+#     "read_winds",
+#     "write_currents",
+#     "write_winds",
+#     "read_particles_results",
+#     "read_properties_results",
+#     "read_grids_results",
+# ]
 
 
 # 1. DOMAIN
@@ -222,7 +224,7 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
 def _write_polygons(
     df: pd.DataFrame,
     dir_path: str | PosixPath,
-    filename: str = "coastline_polygon",
+    filename_pattern: str = DEF_NAMES["files"]["polygon_pattern"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 
@@ -234,7 +236,9 @@ def _write_polygons(
 
     grouped = df.groupby("polygon")
     for polygon, group in grouped:
-        path_polygon = Path(dir_path, f"{filename}_{polygon:03d}.dat")
+        path_polygon = Path(
+            dir_path, f"{filename_pattern}".replace("*", f"{polygon:03d}")
+        )
         group.to_csv(
             path_polygon,
             sep="\t",
@@ -298,11 +302,11 @@ def write_currents(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
         dir_path (PosixPath | str): directory path where will be created the files "lstcurr_UVW.pre" and all the "currents_*.txt"
     """
 
-    lst_filename = "lstcurr_UVW.pre"
-    forcing = "currents"
+    lst_filename = DEF_NAMES["files"]["currents_list"]
+    file_pattern = DEF_NAMES["files"]["currents_pattern"]
     path = Path(dir_path, lst_filename)
 
-    _write_2dh_uv(df, path, forcing)
+    _write_2dh_uv(df, path, file_pattern)
 
 
 def write_winds(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
@@ -312,22 +316,22 @@ def write_winds(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
         df (pd.DataFrame): DataFrame containing columns "time", "lon", "lat", "u", and "v".
         dir_path (PosixPath | str): directory path where will be created the files "lstwinds.pre" and all the "winds_*.txt"
     """
-    lst_filename = "lstwinds.pre"
-    forcing = "winds"
+    lst_filename = DEF_NAMES["files"]["winds_list"]
+    file_pattern = DEF_NAMES["files"]["winds_pattern"]
     path = Path(dir_path, lst_filename)
 
-    _write_2dh_uv(df, path, forcing)
+    _write_2dh_uv(df, path, file_pattern)
 
 
 def _write_2dh_uv(
-    df: pd.DataFrame, path: PosixPath | str, forcing: str, nan_value: int = 0
+    df: pd.DataFrame, path: PosixPath | str, file_pattern: str, nan_value: int = 0
 ):
     """Write 2dh fields [time, lon, lat, u, v] to TESEO's format files
 
     Args:
         df (pd.DataFrame): DataFrame with the currents or fields
         path (PosixPath | str): path to the lstfile of teseo
-        forcing (str): one of the following: ["winds", "currents"]
+        file_pattern (str): one of the following: ["winds_*.txt", "currents_*.txt", waves_*.txt]
         nan_value (int, optional): value for nan's in the file. Defaults to 0.
     """
 
@@ -353,9 +357,9 @@ def _write_2dh_uv(
     grouped = df.groupby("time")
     for time, group in grouped:
         with open(path, "a") as f:
-            f.write(f"{forcing}_{int(time):03d}h.txt\n")
+            f.write(f"{file_pattern}\n".replace("*", f"{int(time):03d}"))
 
-        path_currents = Path(path.parent, f"{forcing}_{int(time):03d}h.txt")
+        path_currents = Path(path.parent, f"{file_pattern}_{int(time):03d}h.txt")
         group.to_csv(
             path_currents,
             sep="\t",
@@ -402,7 +406,8 @@ def _write_2dh_uv(
 
 # # 4. RESULTS
 def read_particles_results(
-    dir_path: PosixPath | str, file_pattern: str = "*_particles_*.txt"
+    dir_path: PosixPath | str,
+    file_pattern: str = DEF_NAMES["files"]["teseo_particles_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's particles results files "*_properties_*.txt" to DataFrame
 
@@ -431,11 +436,13 @@ def read_particles_results(
         for file in files
     ]
 
-    return pd.concat(dfs).reset_index(drop=True)
+    df = pd.concat(dfs).reset_index(drop=True)
+    return _rename_results_names(df)
 
 
 def read_properties_results(
-    dir_path: PosixPath | str, file_pattern: str = "*_properties_*.txt"
+    dir_path: PosixPath | str,
+    file_pattern: str = DEF_NAMES["files"]["teseo_properties_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's propierties results files "*_properties_*.txt" to DataFrame
 
@@ -464,24 +471,26 @@ def read_properties_results(
             encoding="iso-8859-1",
             skipinitialspace=True,
         )
-        df_["spill_id (-)"] = spill_id
+        df_["spill_id (-)"] = int(spill_id)
 
         dfs.append(df_)
 
-    return pd.concat(dfs).reset_index(drop=True)
+    df = pd.concat(dfs).reset_index(drop=True)
+    return _rename_results_names(df)
 
 
 def read_grids_results(
     dir_path: PosixPath | str,
-    file_pattern: str = "*_grid_*.txt",
-    fullgrid_filename="grid_coordinates.txt",
+    file_pattern: str = DEF_NAMES["files"]["teseo_grids_pattern"],
+    fullgrid_filename: str = DEF_NAMES["files"]["teseo_grid_coordinates"],
 ) -> pd.DataFrame:
+
     """Load TESEO's grids results files "*_grid_*.txt" to DataFrame
 
     Args:
         dir_path (PosixPath | str):  path to the results directory
-        file_pattern (str, optional): file pattern of particles restuls. Defaults to "*_grid_*.txt".
-        fullgrid_filename (str, optional): filename of the full domain-grid for results. Defaults to "grid_coordinates.txt".
+        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_NAMES["files"]["teseo_grids_pattern"].
+        fullgrid_filename (str, optional): filename of results coordinates domain-grid. Defaults to  DEF_NAMES["files"]["teseo_grid_coordinates"].
 
     Returns:
         pd.DataFrame: Dataframe with all the results (including times and spill_id)
@@ -519,11 +528,29 @@ def read_grids_results(
     dfs = []
     for spill_id, df_spill in df.groupby("spill_id (-)"):
         minimum_grid = get_minimum_grid(fullgrid, df_spill)
-        dfs.append(add_inactive_cells(df_spill, minimum_grid, spill_id))
-    return pd.concat(dfs).reset_index(drop=True)
+        dfs.append(_add_inactive_cells(df_spill, minimum_grid, spill_id))
+    df = pd.concat(dfs).reset_index(drop=True)
+    return _rename_results_names(df)
 
 
-def add_inactive_cells(
+def _rename_results_names(
+    df: pd.DataFrame, coordname_map: dict = DEF_NAMES["teseo_results_map"]
+) -> pd.DataFrame:
+    """Rename variables according with map in default_names.json
+
+    Args:
+        df (pd.DataFrame): TESEO's results dataframe.
+        coordname_map (dict, optional): map of variable names. Defaults to DEF_NAMES["teseo_results_map"].
+
+    Returns:
+        pd.DataFrame: renamed DataFrame
+    """
+    for key, value in coordname_map.items():
+        df = df.rename(columns={key: value}) if key in df.keys() else df
+    return df
+
+
+def _add_inactive_cells(
     df_spill: pd.DataFrame, minimum_grid: pd.DataFrame, spill_id: int
 ) -> pd.DataFrame:
     """Concatenate active and inactive cells of grids results.
@@ -540,6 +567,7 @@ def add_inactive_cells(
     for time, df in df_spill.groupby("time (h)"):
         tmp = pd.concat([minimum_grid, df])
         tmp["spill_id (-)"] = spill_id
+        tmp["time (h)"] = time
         full_df.append(tmp)
 
     return pd.concat(full_df).drop_duplicates(

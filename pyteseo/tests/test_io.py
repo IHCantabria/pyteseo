@@ -11,6 +11,7 @@ from pyteseo.io import (
     read_particles_results,
     read_properties_results,
     read_grids_results,
+    DEF_NAMES,
 )
 
 
@@ -320,3 +321,15 @@ def test_read_grids_results(error):
 
     df = read_grids_results(dir_path=data_path)
     assert isinstance(df, pd.DataFrame)
+
+
+def test_default_names():
+    assert bool(DEF_NAMES) is True
+    assert "dirs" in DEF_NAMES.keys()
+    assert "files" in DEF_NAMES.keys()
+    assert "vars" in DEF_NAMES.keys()
+    assert "coords" in DEF_NAMES.keys()
+    assert "x" in DEF_NAMES["coords"].keys()
+    assert "y" in DEF_NAMES["coords"].keys()
+    assert "z" in DEF_NAMES["coords"].keys()
+    assert "t" in DEF_NAMES["coords"].keys()
