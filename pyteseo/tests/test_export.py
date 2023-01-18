@@ -46,7 +46,6 @@ def test_export_particles(file_format, output_dir, error, setup_teardown):
     elif error == "not_implemented":
         with pytest.raises(NotImplementedError):
             export_particles(df, file_format, output_dir)
-
     else:
         files = export_particles(df, file_format, output_dir)
         assert all([file.exists() for file in files])
