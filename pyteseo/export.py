@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path, PosixPath, WindowsPath
 from pandas import DataFrame
 
-from pyteseo.__init__ import DEF_NAMES
+from pyteseo.__init__ import DEF_COORDS, DEF_FILES
 
 
 def export_particles(
@@ -34,9 +34,7 @@ def export_particles(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_NAMES["files"]["export_particles_pattern"].replace(
-                ".*", f".{file_format}"
-            ),
+            DEF_FILES["export_particles_pattern"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
@@ -83,19 +81,14 @@ def export_properties(
     output_dir = Path(output_dir)
     file_format = file_format.lower()
     if file_format not in allowed_formats:
-        raise ValueError(
-            f"Invalid format: {file_format}. Allowed formats {allowed_formats}"
-        )
-    else:
-        output_path_pattern = Path(
-            output_dir,
-            DEF_NAMES["files"]["export_properties_pattern"].replace(
-                ".*", f".{file_format}"
-            ),
-        )
+        raise ValueError(f"Invalid format. Allowed formats {allowed_formats}")
+    filename_pattern = DEF_FILES["export_properties_pattern"].replace(
+        ".*", f".{file_format}"
+    )
+    path_pattern = output_dir / filename_pattern
 
     for spill_id, df in df.groupby("spill_id"):
-        output_path = Path(str(output_path_pattern).replace("*", f"{spill_id:03d}"))
+        output_path = Path(str(path_pattern).replace("*", f"{spill_id:03d}"))
         if file_format == "csv":
             df.to_csv(output_path, index=False)
         elif file_format == "json":
@@ -137,7 +130,7 @@ def export_grids(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_NAMES["files"]["export_grids_pattern"].replace(".*", f".{file_format}"),
+            DEF_FILES["export_grids_pattern"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
@@ -149,9 +142,9 @@ def export_grids(
         elif file_format == "nc":
             df = df.set_index(
                 [
-                    DEF_NAMES["coords"]["t"],
-                    DEF_NAMES["coords"]["x"],
-                    DEF_NAMES["coords"]["y"],
+                    DEF_COORDS["t"],
+                    DEF_COORDS["x"],
+                    DEF_COORDS["y"],
                 ]
             )
             ds = df.to_xarray().drop("spill_id")

@@ -9,4 +9,10 @@ from pathlib import Path
 
 with open(Path("pyteseo", "defaults.json"), "r") as f:
     data = f.read()
-DEF_NAMES = json.loads(data)
+defaults = json.loads(data)
+
+DEF_DIRS = defaults["dirs"]
+DEF_FILES = defaults["files"]
+DEF_VARS = defaults["vars"]
+DEF_COORDS = defaults["coords"]
+DEF_TESEO_RESULTS_MAP = defaults["teseo_results_map"]

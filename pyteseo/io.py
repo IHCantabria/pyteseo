@@ -8,7 +8,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
-from pyteseo.__init__ import DEF_NAMES
+from pyteseo.__init__ import DEF_FILES, DEF_TESEO_RESULTS_MAP
 
 # NOTE - Restricts the loading when from "pyteseo.io import *"" to the names defined here but it are loaded in pytest.CHECK BEHAVIOUR
 # NOTE - Restricts what is documented by Sphinx (!!!)
@@ -224,7 +224,7 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
 def _write_polygons(
     df: pd.DataFrame,
     dir_path: str | PosixPath,
-    filename_pattern: str = DEF_NAMES["files"]["polygon_pattern"],
+    filename_pattern: str = DEF_FILES["polygon_pattern"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 
@@ -302,8 +302,8 @@ def write_currents(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
         dir_path (PosixPath | str): directory path where will be created the files "lstcurr_UVW.pre" and all the "currents_*.txt"
     """
 
-    lst_filename = DEF_NAMES["files"]["currents_list"]
-    file_pattern = DEF_NAMES["files"]["currents_pattern"]
+    lst_filename = DEF_FILES["currents_list"]
+    file_pattern = DEF_FILES["currents_pattern"]
     path = Path(dir_path, lst_filename)
 
     _write_2dh_uv(df, path, file_pattern)
@@ -316,8 +316,8 @@ def write_winds(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
         df (pd.DataFrame): DataFrame containing columns "time", "lon", "lat", "u", and "v".
         dir_path (PosixPath | str): directory path where will be created the files "lstwinds.pre" and all the "winds_*.txt"
     """
-    lst_filename = DEF_NAMES["files"]["winds_list"]
-    file_pattern = DEF_NAMES["files"]["winds_pattern"]
+    lst_filename = DEF_FILES["winds_list"]
+    file_pattern = DEF_FILES["winds_pattern"]
     path = Path(dir_path, lst_filename)
 
     _write_2dh_uv(df, path, file_pattern)
@@ -407,7 +407,7 @@ def _write_2dh_uv(
 # # 4. RESULTS
 def read_particles_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_NAMES["files"]["teseo_particles_pattern"],
+    file_pattern: str = DEF_FILES["teseo_particles_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's particles results files "*_properties_*.txt" to DataFrame
 
@@ -442,7 +442,7 @@ def read_particles_results(
 
 def read_properties_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_NAMES["files"]["teseo_properties_pattern"],
+    file_pattern: str = DEF_FILES["teseo_properties_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's propierties results files "*_properties_*.txt" to DataFrame
 
@@ -481,16 +481,16 @@ def read_properties_results(
 
 def read_grids_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_NAMES["files"]["teseo_grids_pattern"],
-    fullgrid_filename: str = DEF_NAMES["files"]["teseo_grid_coordinates"],
+    file_pattern: str = DEF_FILES["teseo_grids_pattern"],
+    fullgrid_filename: str = DEF_FILES["teseo_grid_coordinates"],
 ) -> pd.DataFrame:
 
     """Load TESEO's grids results files "*_grid_*.txt" to DataFrame
 
     Args:
         dir_path (PosixPath | str):  path to the results directory
-        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_NAMES["files"]["teseo_grids_pattern"].
-        fullgrid_filename (str, optional): filename of results coordinates domain-grid. Defaults to  DEF_NAMES["files"]["teseo_grid_coordinates"].
+        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_FILES["teseo_grids_pattern"].
+        fullgrid_filename (str, optional): filename of results coordinates domain-grid. Defaults to  DEF_FILES["teseo_grid_coordinates"].
 
     Returns:
         pd.DataFrame: Dataframe with all the results (including times and spill_id)
@@ -534,7 +534,7 @@ def read_grids_results(
 
 
 def _rename_results_names(
-    df: pd.DataFrame, coordname_map: dict = DEF_NAMES["teseo_results_map"]
+    df: pd.DataFrame, coordname_map: dict = DEF_TESEO_RESULTS_MAP
 ) -> pd.DataFrame:
     """Rename variables according with map in default_names.json
 

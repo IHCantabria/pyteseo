@@ -7,8 +7,10 @@
 3) notebook - USE CASE 02
 4) add py3.11 to test workflow
 5) exclude windows w/ py3.7
+6) add pyteseo.export functionality
+7) add pyteseo/defaults.json to centralize defaults (names, configs...)
 ### Changed:
-2) cli pyteseo-tests move to pyteseo/tests.__init__.py
+1) cli pyteseo-tests move to pyteseo/tests.__init__.py
 ### Fixed:
 <br/><br/>
 

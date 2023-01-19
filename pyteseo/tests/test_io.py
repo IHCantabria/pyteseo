@@ -11,7 +11,14 @@ from pyteseo.io import (
     read_particles_results,
     read_properties_results,
     read_grids_results,
-    DEF_NAMES,
+)
+
+from pyteseo.__init__ import (
+    DEF_COORDS,
+    DEF_DIRS,
+    DEF_FILES,
+    DEF_VARS,
+    DEF_TESEO_RESULTS_MAP,
 )
 
 
@@ -324,12 +331,11 @@ def test_read_grids_results(error):
 
 
 def test_default_names():
-    assert bool(DEF_NAMES) is True
-    assert "dirs" in DEF_NAMES.keys()
-    assert "files" in DEF_NAMES.keys()
-    assert "vars" in DEF_NAMES.keys()
-    assert "coords" in DEF_NAMES.keys()
-    assert "x" in DEF_NAMES["coords"].keys()
-    assert "y" in DEF_NAMES["coords"].keys()
-    assert "z" in DEF_NAMES["coords"].keys()
-    assert "t" in DEF_NAMES["coords"].keys()
+    assert bool(DEF_DIRS) is True
+    assert bool(DEF_FILES) is True
+    assert bool(DEF_VARS) is True
+    assert bool(DEF_TESEO_RESULTS_MAP) is True
+    assert "x" in DEF_COORDS.keys()
+    assert "y" in DEF_COORDS.keys()
+    assert "z" in DEF_COORDS.keys()
+    assert "t" in DEF_COORDS.keys()
