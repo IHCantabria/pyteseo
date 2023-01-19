@@ -4,11 +4,12 @@
 ### Added:
 1) read results (particles, properties, and grids)
 2) add mod calculation to read_currents and read_winds
-3) notebook - USE CASE 02
+3) notebook 02
 4) add py3.11 to test workflow
 5) exclude windows w/ py3.7
 6) add pyteseo.export functionality
 7) add pyteseo/defaults.json to centralize defaults (names, configs...)
+8) add docs/notebooks/03_export_resutls.ipynb
 ### Changed:
 1) cli pyteseo-tests move to pyteseo/tests.__init__.py
 ### Fixed:
