@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.0.5 - ??/??/????
+## v0.0.5 - 19/01/2023
 ### Added:
 1) read results (particles, properties, and grids)
 2) add mod calculation to read_currents and read_winds
@@ -13,6 +13,7 @@
 ### Changed:
 1) cli pyteseo-tests move to pyteseo/tests.__init__.py
 ### Fixed:
+1) added pre-commit with check-yaml, end-of-file-fixer, trailing-whitespace, black, black-jupyter and falke8
 <br/><br/>
 
 
