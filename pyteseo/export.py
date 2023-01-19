@@ -1,20 +1,22 @@
 from __future__ import annotations
 
 from pathlib import Path, PosixPath, WindowsPath
-from pandas import DataFrame
+from geojson import Feature, FeatureCollection, MultiPoint, dump
+from datetime import datetime, timedelta
+import pandas as pd
 
 from pyteseo.__init__ import DEF_COORDS, DEF_FILES
 
 
 def export_particles(
-    df: DataFrame,
+    df: pd.DataFrame,
     file_format: list[str],
     output_dir: str | PosixPath | WindowsPath = "./",
 ) -> list[PosixPath]:
     """Export TESEO's particles (by spill_id) to CSV, JSON, or GEOJSON.
 
     Args:
-        df (DataFrame): Particles data obtained with pyteseo.io.read_particles_results.
+        df (pd.DataFrame): Particles data obtained with pyteseo.io.read_particles_results.
         file_format (list[str]): csv, json, or geojson.
         output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
 
@@ -44,8 +46,7 @@ def export_particles(
         elif file_format == "json":
             df.to_json(output_path, orient="index")
         elif file_format == "geojson":
-            raise NotImplementedError("not implemented yet!")
-            # TODO _df_to_geojson()
+            _df_particles_to_geojson(df, output_path)
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
@@ -55,19 +56,50 @@ def export_particles(
     return exported_files
 
 
-# def _particles_df_to_geojson():
-#     print("doing something...")
+def _df_particles_to_geojson(
+    df: pd.DataFrame,
+    output_path: str | PosixPath | WindowsPath,
+    ref_datetime: datetime,
+) -> None:
+    """Convert particles DataFrame to geojson using geojson library.
+
+    Args:
+        df (pd.DataFrame): Particles data readed with pyteseo.io.read_particles_results
+        output_path (str | PosixPath | WindowsPath): path to create the exported file.
+        ref_datetime (datetime, optional): Reference time of the results.
+    """
+
+    # Delete units from headers
+    features = []
+
+    df["ref_datetime"] = ref_datetime
+    df["utc_datetime"] = df["ref_datetime"] + (df["time"] / 24).apply(timedelta)
+
+    new_feature = Feature(
+        geometry=MultiPoint(df[["lon", "lat"]].values.tolist()),
+        properties={
+            "times": df["utc_datetime"]
+            .dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            .values.tolist(),
+            "status": df["status_index"].values.tolist(),
+            "spill_id": df["spill_id"].values.tolist(),
+        },
+    )
+    features.append(new_feature)
+
+    with open(output_path, "w") as f:
+        dump(FeatureCollection(features), f)
 
 
 def export_properties(
-    df: DataFrame,
+    df: pd.DataFrame,
     file_format: list[str],
     output_dir: str | PosixPath | WindowsPath = "./",
 ) -> list[PosixPath]:
     """Export TESEO's properties (by spill_id) to CSV, or JSON.
 
     Args:
-        df (DataFrame): Properties data obtained with pyteseo.io.read_properties_results.
+        df (pd.DataFrame): Properties data obtained with pyteseo.io.read_properties_results.
         file_format (list[str]): csv, or json.
         output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
 
@@ -103,14 +135,14 @@ def export_properties(
 
 
 def export_grids(
-    df: DataFrame,
+    df: pd.DataFrame,
     file_format: list[str],
     output_dir: str | PosixPath | WindowsPath = "./",
 ) -> list[PosixPath]:
     """Export TESEO's grids (by spill_id) to CSV, JSON, or NETCDF.
 
     Args:
-        df (DataFrame): Grids data obtained with pyteseo.io.read_grids_results.
+        df (pd.DataFrame): Grids data obtained with pyteseo.io.read_grids_results.
         file_format (list[str]): csv, json, or nc.
         output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
 
