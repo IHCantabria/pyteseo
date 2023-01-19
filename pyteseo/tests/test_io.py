@@ -29,9 +29,17 @@ import pytest
 from pyteseo.__init__ import __version__ as v
 
 
-# TODO - Put a @fixture to setup the base path
 data_path = Path(__file__).parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
+
+
+@pytest.fixture
+def setup_teardown():
+    if not tmp_path.exists():
+        tmp_path.mkdir()
+    yield
+    if tmp_path.exists():
+        rmtree(tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -63,9 +71,7 @@ def test_read_grid(file, error):
     "error",
     [(None), ("df_n_var"), ("df_varnames"), ("lonlat_range"), ("sorting")],
 )
-def test_write_grid(error):
-    if not tmp_path.exists():
-        tmp_path.mkdir()
+def test_write_grid(error, setup_teardown):
 
     grid_path = Path(data_path, "grid.dat")
     output_path = Path(tmp_path, "test_grid.dat")
@@ -158,9 +164,7 @@ def test_read_coastline(file, error):
 @pytest.mark.parametrize(
     "error", [(None), ("df_n_var"), ("df_varnames"), ("lonlat_range")]
 )
-def test_write_coastline(error):
-    if not tmp_path.exists():
-        tmp_path.mkdir()
+def test_write_coastline(error, setup_teardown):
 
     coastline_path = Path(data_path, "coastline.dat")
     output_path = Path(tmp_path, "test_coastline.dat")
@@ -187,9 +191,6 @@ def test_write_coastline(error):
         newdf = read_coastline(path=output_path)
 
         assert all(newdf.get(["lon", "lat"]) == df.get(["lon", "lat"]))
-
-    if tmp_path.exists():
-        rmtree(tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -246,13 +247,10 @@ def test_read_winds(file, error):
 
 
 @pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
-def test_write_currents(error):
+def test_write_currents(error, setup_teardown):
 
     currents_path = Path(data_path, "lstcurr_UVW.pre")
     df, files, nodes = read_currents(currents_path)
-
-    if not tmp_path.exists():
-        tmp_path.mkdir()
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})
@@ -268,18 +266,12 @@ def test_write_currents(error):
         write_currents(df, tmp_path)
         assert Path(tmp_path, "lstcurr_UVW.pre").exists()
 
-    if tmp_path.exists():
-        rmtree(tmp_path)
-
 
 @pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
-def test_write_winds(error):
+def test_write_winds(error, setup_teardown):
 
     winds_path = Path(data_path, "lstwinds.pre")
     df, files, nodes = read_currents(winds_path)
-
-    if not tmp_path.exists():
-        tmp_path.mkdir()
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})
@@ -294,9 +286,6 @@ def test_write_winds(error):
     else:
         write_winds(df, tmp_path)
         assert Path(tmp_path, "lstwinds.pre").exists()
-
-    if tmp_path.exists():
-        rmtree(tmp_path)
 
 
 @pytest.mark.parametrize("error", [(None), ("no_match")])

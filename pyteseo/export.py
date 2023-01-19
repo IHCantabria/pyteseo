@@ -8,10 +8,14 @@ import pandas as pd
 from pyteseo.__init__ import DEF_COORDS, DEF_FILES
 
 
+# TODO - extend addition of utc_datetime to all the exportations
+
+
 def export_particles(
     df: pd.DataFrame,
     file_format: list[str],
     output_dir: str | PosixPath | WindowsPath = "./",
+    ref_datetime: datetime = None,
 ) -> list[PosixPath]:
     """Export TESEO's particles (by spill_id) to CSV, JSON, or GEOJSON.
 
@@ -19,6 +23,7 @@ def export_particles(
         df (pd.DataFrame): Particles data obtained with pyteseo.io.read_particles_results.
         file_format (list[str]): csv, json, or geojson.
         output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
+        ref_datetime (datetime): Reference datetime of the results. Defaults to None.
 
     Returns:
         list[PosixPath]: paths to exported files.
@@ -46,11 +51,14 @@ def export_particles(
         elif file_format == "json":
             df.to_json(output_path, orient="index")
         elif file_format == "geojson":
-            _df_particles_to_geojson(df, output_path)
+            if not ref_datetime:
+                print("WARNING - You do not specify ")
+                ref_datetime = datetime.utcnow()
+            _df_particles_to_geojson(df, output_path, ref_datetime)
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"Particles {spill_id} successfully exported to {file_format.upper()} @ {output_path}"
+            f"[spill_{spill_id:03d}] Particles successfully exported to {file_format.upper()} @ {output_path}"
         )
 
     return exported_files
@@ -71,7 +79,6 @@ def _df_particles_to_geojson(
 
     # Delete units from headers
     features = []
-
     df["ref_datetime"] = ref_datetime
     df["utc_datetime"] = df["ref_datetime"] + (df["time"] / 24).apply(timedelta)
 
@@ -128,7 +135,7 @@ def export_properties(
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"Properties {spill_id} successfully exported to {file_format.upper()} @ {output_path}"
+            f"[spill_{spill_id:03d}] Properties successfully exported to {file_format.upper()} @ {output_path}"
         )
 
     return exported_files
@@ -185,7 +192,7 @@ def export_grids(
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"Grids {spill_id} successfully exported to {file_format.upper()} @ {output_path}"
+            f"[spill_{spill_id:03d}] Grids successfully exported to {file_format.upper()} @ {output_path}"
         )
 
     return exported_files

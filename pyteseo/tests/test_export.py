@@ -14,7 +14,6 @@ from pyteseo.io import (
 )
 
 
-# TODO - Put a @fixture to setup the base path
 data_path = Path(__file__).parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
 
