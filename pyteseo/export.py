@@ -13,7 +13,7 @@ from pyteseo.__init__ import DEF_COORDS, DEF_FILES
 
 def export_particles(
     df: pd.DataFrame,
-    file_format: list[str],
+    file_format: str,
     output_dir: str | PosixPath | WindowsPath = "./",
     ref_datetime: datetime = None,
 ) -> list[PosixPath]:
@@ -21,7 +21,7 @@ def export_particles(
 
     Args:
         df (pd.DataFrame): Particles data obtained with pyteseo.io.read_particles_results.
-        file_format (list[str]): csv, json, or geojson.
+        file_format (str): csv, json, or geojson.
         output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
         ref_datetime (datetime): Reference datetime of the results. Defaults to None.
 
@@ -58,7 +58,7 @@ def export_particles(
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"[spill_{spill_id:03d}] Particles successfully exported to {file_format.upper()} @ {output_path}"
+            f"\033[1;32m[spill_{spill_id:03d}] Particles successfully exported to {file_format.upper()} @ {output_path}\033[0;0m\n"
         )
 
     return exported_files
@@ -135,7 +135,7 @@ def export_properties(
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"[spill_{spill_id:03d}] Properties successfully exported to {file_format.upper()} @ {output_path}"
+            f"\033[1;32m[spill_{spill_id:03d}] Properties successfully exported to {file_format.upper()} @ {output_path}\033[0;0m\n"
         )
 
     return exported_files
@@ -192,7 +192,7 @@ def export_grids(
         exported_files.append(output_path)
         # NOTE - change for logging?
         print(
-            f"[spill_{spill_id:03d}] Grids successfully exported to {file_format.upper()} @ {output_path}"
+            f"\033[1;32m[spill_{spill_id:03d}] Grids successfully exported to {file_format.upper()} @ {output_path}\033[0;0m\n"
         )
 
     return exported_files
