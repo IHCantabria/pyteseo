@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 
-with open(Path("pyteseo", "defaults.json"), "r") as f:
+with open(Path(__file__).parent / "defaults.json", "r") as f:
     data = f.read()
 defaults = json.loads(data)
 
