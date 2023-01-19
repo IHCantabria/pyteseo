@@ -5,7 +5,7 @@ from geojson import Feature, FeatureCollection, MultiPoint, dump
 from datetime import datetime, timedelta
 import pandas as pd
 
-from pyteseo.__init__ import DEF_COORDS, DEF_FILES
+from pyteseo.defaults import DEF_COORDS, DEF_FILES
 
 
 # TODO - extend addition of utc_datetime to all the exportations

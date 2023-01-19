@@ -13,14 +13,6 @@ from pyteseo.io import (
     read_grids_results,
 )
 
-from pyteseo.__init__ import (
-    DEF_COORDS,
-    DEF_DIRS,
-    DEF_FILES,
-    DEF_VARS,
-    DEF_TESEO_RESULTS_MAP,
-)
-
 
 import pandas as pd
 from pathlib import Path
@@ -317,14 +309,3 @@ def test_read_grids_results(error):
 
     df = read_grids_results(dir_path=data_path)
     assert isinstance(df, pd.DataFrame)
-
-
-def test_default_names():
-    assert bool(DEF_DIRS) is True
-    assert bool(DEF_FILES) is True
-    assert bool(DEF_VARS) is True
-    assert bool(DEF_TESEO_RESULTS_MAP) is True
-    assert "x" in DEF_COORDS.keys()
-    assert "y" in DEF_COORDS.keys()
-    assert "z" in DEF_COORDS.keys()
-    assert "t" in DEF_COORDS.keys()

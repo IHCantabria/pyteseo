@@ -8,7 +8,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
-from pyteseo.__init__ import DEF_FILES, DEF_TESEO_RESULTS_MAP
+from pyteseo.defaults import DEF_FILES, DEF_TESEO_RESULTS_MAP
 
 # NOTE - Restricts what is documented by Sphinx (!!!)
 # __all__ = [
