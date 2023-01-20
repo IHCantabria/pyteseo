@@ -12,6 +12,7 @@ project = "pyTESEO"
 copyright = "2022, Germán Aragón Caminero"
 author = "Germán Aragón Caminero"
 version = release = __version__
+github_url = "https://github.com/IHCantabria/pyteseo"
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,7 +35,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "display_version": True,
-    "github_url": "https://github.com/IHCantabria/pyteseo",
 }
 # html_theme = 'furo'
 # html_theme = 'sphinx_book_theme'
