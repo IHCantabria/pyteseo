@@ -41,6 +41,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "display_version": True,
+    "style_external_links": False,
 }
 # html_theme = 'furo'
 # html_theme = 'sphinx_book_theme'
