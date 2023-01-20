@@ -13,7 +13,12 @@ copyright = "2022, Germán Aragón Caminero"
 author = "Germán Aragón Caminero"
 version = release = __version__
 github_url = "https://github.com/IHCantabria/pyteseo"
-
+html_context = {
+    "display_github": True,  # Integrate GitHub
+    "github_user": "ihcantabria",  # Username
+    "github_repo": "pyteseo",  # Repo name
+    "github_version": "main",  # Version
+}
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
