@@ -12,7 +12,7 @@ project = "pyTESEO"
 copyright = "2022, Germán Aragón Caminero"
 author = "Germán Aragón Caminero"
 version = release = __version__
-github_url = "https://github.com/IHCantabria/pyteseo"
+
 html_context = {
     "display_github": True,  # Integrate GitHub
     "github_user": "ihcantabria",  # Username
