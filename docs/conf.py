@@ -7,10 +7,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 from pyteseo.__init__ import __version__
 
+
 project = "pyTESEO"
 copyright = "2022, Germán Aragón Caminero"
 author = "Germán Aragón Caminero"
-release = __version__
+version = release = __version__
+
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -32,6 +34,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "display_version": True,
+    "github_url": "https://github.com/IHCantabria/pyteseo",
 }
 # html_theme = 'furo'
 # html_theme = 'sphinx_book_theme'
