@@ -17,6 +17,8 @@ html_context = {
     "display_github": True,  # Integrate GitHub
     "github_user": "ihcantabria",  # Username
     "github_repo": "pyteseo",  # Repo name
+    "github_version": "main",  # Version
+    "conf_py_path": "/docs/",
 }
 
 # -- General configuration ---------------------------------------------------
