@@ -11,7 +11,7 @@ dependencies:
   - ipykernel
   - matplotlib
   - geojson
-  - pytest
+  - pytest>=7
   - coverage
   - flit
   - black

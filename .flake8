@@ -2,4 +2,5 @@
 max-line-length = 88
 ; W605 - invalid escape sequence '\s' (pd.read_csv)
 ; E203 - whitespace before ':'
+; E501 - Line too long
 extend-ignore = E203, E501, W605

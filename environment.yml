@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.7
+  - python>=3.7
   - xarray
   - dask
   - netcdf4
@@ -11,4 +11,4 @@ dependencies:
   - ipykernel
   - matplotlib
   - geojson
-  - pytest
+  - pytest>=7
