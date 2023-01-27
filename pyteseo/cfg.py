@@ -15,7 +15,7 @@ from shutil import copy
 import pandas as pd
 
 from pyteseo.defaults import DEF_FILES
-from pyteseo.io import write_cte_currents, write_cte_waves, write_cte_winds
+from pyteseo.io.forcings import write_cte_currents, write_cte_waves, write_cte_winds
 
 
 spill_points = [{}, {}]

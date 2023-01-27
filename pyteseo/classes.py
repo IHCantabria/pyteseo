@@ -3,15 +3,16 @@ import numpy as np
 import pandas as pd
 
 from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES
-from pyteseo.io import (
+from pyteseo.io.forcings import (
     read_currents,
     read_winds,
     read_waves,
-    read_grid,
     write_cte_currents,
     write_cte_winds,
     write_cte_waves,
 )
+
+from pyteseo.io.domain import read_grid
 
 
 class TeseoWrapper:

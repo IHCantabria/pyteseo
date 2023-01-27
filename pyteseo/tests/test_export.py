@@ -1,18 +1,17 @@
 from pathlib import Path
 from shutil import rmtree
+
 import pytest
+
 from pyteseo.__init__ import __version__ as v
-from pyteseo.export import (
-    export_particles,
-    export_properties,
-    export_grids,
-)
-from pyteseo.io import (
+from pyteseo.export.grids import export_grids
+from pyteseo.export.particles import export_particles
+from pyteseo.export.properties import export_properties
+from pyteseo.io.results import (
+    read_grids_results,
     read_particles_results,
     read_properties_results,
-    read_grids_results,
 )
-
 
 data_path = Path(__file__).parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
