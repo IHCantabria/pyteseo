@@ -1,23 +1,26 @@
 {
     "dirs": {
-        "input": "input"
+        "inputs": "inputs"
     },
     "files": {
         "grid": "grid.dat",
+        "results_grid": "results_grid.dat",
         "coastline": "coastline.dat",
-        "polygon_pattern": "coastline_polygon_*.dat",
         "currents_list": "lstcurr_UVW.pre",
-        "currents_pattern": "currents_*.txt",
         "winds_list": "lstwinds.pre",
-        "winds_pattern": "winds_*.txt",
         "waves_list": "lstwaves.pre",
+        "teseo_grid_coordinates": "grid_coordinates.txt"
+    },
+    "patterns": {
+        "polygon_pattern": "coastline_polygon_*.dat",
+        "currents_pattern": "currents_*.txt",
+        "winds_pattern": "winds_*.txt",
         "waves_pattern": "waves_*.txt",
         "config_pattern": "*.cfg",
         "run_pattern": "*.run",
         "teseo_particles_pattern": "*_particles_*.txt",
         "teseo_properties_pattern": "*_properties_*.txt",
         "teseo_grids_pattern": "*_grid_*.txt",
-        "teseo_grid_coordinates": "grid_coordinates.txt",
         "export_particles_pattern": "particles_*.*",
         "export_properties_pattern": "properties_*.*",
         "export_grids_pattern": "grids_*.*"
