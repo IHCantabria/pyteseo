@@ -5,7 +5,7 @@ from geojson import Feature, FeatureCollection, MultiPoint, dump
 from datetime import datetime, timedelta
 import pandas as pd
 
-from pyteseo.defaults import DEF_COORDS, DEF_FILES
+from pyteseo.defaults import DEF_COORDS, DEF_PATTERNS
 
 
 # TODO - extend addition of utc_datetime to all the exportations
@@ -41,7 +41,7 @@ def export_particles(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_FILES["export_particles_pattern"].replace(".*", f".{file_format}"),
+            DEF_PATTERNS["export_particles_pattern"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
@@ -121,7 +121,7 @@ def export_properties(
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(f"Invalid format. Allowed formats {allowed_formats}")
-    filename_pattern = DEF_FILES["export_properties_pattern"].replace(
+    filename_pattern = DEF_PATTERNS["export_properties_pattern"].replace(
         ".*", f".{file_format}"
     )
     path_pattern = output_dir / filename_pattern
@@ -169,7 +169,7 @@ def export_grids(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_FILES["export_grids_pattern"].replace(".*", f".{file_format}"),
+            DEF_PATTERNS["export_grids_pattern"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
@@ -186,7 +186,7 @@ def export_grids(
                     DEF_COORDS["y"],
                 ]
             )
-            ds = df.to_xarray().drop("spill_id")
+            ds = df.to_xarray().drop_vars("spill_id")
             ds = _format_grid_netcdf(ds)
             ds.to_netcdf(output_path)
         exported_files.append(output_path)

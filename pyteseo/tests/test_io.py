@@ -1,25 +1,25 @@
-from pyteseo.io import (
-    read_grid,
-    write_grid,
-    read_coastline,
-    write_coastline,
-    _split_polygons,
-    read_currents,
-    read_winds,
-    write_currents,
-    write_winds,
-    read_particles_results,
-    read_properties_results,
-    read_grids_results,
-)
-
-
-import pandas as pd
 from pathlib import Path
 from shutil import rmtree
-import pytest
-from pyteseo.__init__ import __version__ as v
 
+import numpy as np
+import pandas as pd
+import pytest
+
+from pyteseo.__init__ import __version__ as v
+from pyteseo.io import (
+    _split_polygons,
+    read_coastline,
+    read_currents,
+    read_grid,
+    read_grids_results,
+    read_particles_results,
+    read_properties_results,
+    read_winds,
+    write_coastline,
+    write_currents,
+    write_grid,
+    write_winds,
+)
 
 data_path = Path(__file__).parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
@@ -201,16 +201,18 @@ def test_read_currents(file, error):
 
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            df, n_files, n_grid_nodes = read_currents(path)
+            df = read_currents(path)
     elif error in ["sort", "range", "var"]:
         with pytest.raises(ValueError):
-            df, n_files, n_grid_nodes = read_currents(path)
+            df = read_currents(path)
     else:
-        df, n_files, n_grid_nodes = read_currents(path)
+        df = read_currents(path)
 
         assert isinstance(df, pd.DataFrame)
-        assert n_files == 4
-        assert n_grid_nodes == 12
+        assert len(df["time"].unique()) == 4
+        assert len(df["lon"].unique()) == 4
+        assert len(df["lat"].unique()) == 3
+        assert np.unique(np.diff(df["time"].unique()))[0] == 1
 
 
 @pytest.mark.parametrize(
@@ -226,23 +228,25 @@ def test_read_winds(file, error):
 
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            df, n_files, n_grid_nodes = read_winds(path)
+            df = read_winds(path)
     elif error in ["sort", "range", "var"]:
         with pytest.raises(ValueError):
-            df, n_files, n_grid_nodes = read_winds(path)
+            df = read_winds(path)
     else:
-        df, n_files, n_grid_nodes = read_winds(path)
+        df = read_winds(path)
 
         assert isinstance(df, pd.DataFrame)
-        assert n_files == 4
-        assert n_grid_nodes == 12
+        assert len(df["time"].unique()) == 4
+        assert len(df["lon"].unique()) == 4
+        assert len(df["lat"].unique()) == 3
+        assert np.unique(np.diff(df["time"].unique()))[0] == 1
 
 
 @pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
 def test_write_currents(error, setup_teardown):
 
     currents_path = Path(data_path, "lstcurr_UVW.pre")
-    df, files, nodes = read_currents(currents_path)
+    df = read_currents(currents_path)
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})
@@ -263,7 +267,7 @@ def test_write_currents(error, setup_teardown):
 def test_write_winds(error, setup_teardown):
 
     winds_path = Path(data_path, "lstwinds.pre")
-    df, files, nodes = read_currents(winds_path)
+    df = read_winds(winds_path)
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})

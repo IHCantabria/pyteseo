@@ -8,7 +8,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
-from pyteseo.defaults import DEF_FILES, DEF_TESEO_RESULTS_MAP
+from pyteseo.defaults import DEF_FILES, DEF_PATTERNS, DEF_TESEO_RESULTS_MAP
 
 # NOTE - Restricts what is documented by Sphinx (!!!)
 # __all__ = [
@@ -39,7 +39,7 @@ def read_grid(
     Returns:
         pd.DataFrame: DataFrame with TESEO grid data [lon, lat, depth]
     """
-
+    path = Path(path)
     df = pd.read_csv(path, delimiter="\s+", na_values=str(nan_value), header=None)
 
     if df.shape[1] != 3:
@@ -76,6 +76,7 @@ def read_coastline(path: str | PosixPath) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with TESEO coastline data [lon, lat]
     """
+    path = Path(path)
     df = pd.read_csv(path, delimiter="\s+", header=None)
     if df.shape[1] != 2:
         raise ValueError("TESEO coastline-file should contains lon, lat values only!")
@@ -144,7 +145,6 @@ def write_grid(
         path (str | PosixPath): path to the new grid-file
         nan_value (int | float, optional): define how will be writted nan values in the grid-file. Defaults to -999.
     """
-
     if (
         "lon" not in df.keys().values
         or "lat" not in df.keys().values
@@ -222,7 +222,7 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
 def _write_polygons(
     df: pd.DataFrame,
     dir_path: str | PosixPath,
-    filename_pattern: str = DEF_FILES["polygon_pattern"],
+    filename_pattern: str = DEF_PATTERNS["polygon_pattern"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 
@@ -248,15 +248,16 @@ def _write_polygons(
 
 
 # 2. FORCINGS
-def read_currents(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float]:
+def read_currents(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float, float]:
     """Read TESEO currents-files (2dh: [lon, lat, u, v])
 
     Args:
         path (str | PosixPath): path to TESEO lstcurr.pre file
 
     Returns:
-        Tuple[pd.DataFrame, float, float]: DataFrame of currents, number of files (times), and number of nodes
+        Tuple[pd.DataFrame, float, float, float]: DataFrame of currents, number of files (times), number of nodes, and dt in hours
     """
+    path = Path(path)
     with open(path, "r") as f:
         files = [Path(path.parent, line.rstrip()) for line in f]
 
@@ -267,18 +268,24 @@ def read_currents(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float]:
     if len(n_rows) != 1:
         raise ValueError("Number of lines in each file are not equal!")
 
-    return pd.concat(df_list), len(files), n_rows[0]
+    df = pd.concat(df_list)
+    dt_h = np.unique(np.diff(df["time"].unique()))
+    if len(dt_h) != 1:
+        raise ValueError("Forcing time steps are not constant!")
+
+    return df
 
 
-def read_winds(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float]:
+def read_winds(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float, float]:
     """Read TESEO winds-files (2dh: [lon, lat, u, v])
 
     Args:
         path (str | PosixPath): path to TESEO lstwinds.pre file
 
     Returns:
-        Tuple[pd.DataFrame, float, float]: DataFrame of winds, number of files (times), and number of nodes
+        Tuple[pd.DataFrame, float, float, float]: DataFrame of winds, number of files (times), number of nodes, and dt in hours.
     """
+    path = Path(path)
     with open(path, "r") as f:
         files = [Path(path.parent, line.rstrip()) for line in f]
 
@@ -289,7 +296,16 @@ def read_winds(path: str | PosixPath) -> Tuple[pd.DataFrame, float, float]:
     if len(n_rows) != 1:
         raise ValueError("Number of lines in each file are not equal!")
 
-    return pd.concat(df_list), len(files), n_rows[0]
+    df = pd.concat(df_list)
+    dt_h = np.unique(np.diff(df["time"].unique()))
+    if len(dt_h) != 1:
+        raise ValueError("Forcing time steps are not constant!")
+
+    return df
+
+
+def read_waves():
+    pass
 
 
 def write_currents(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
@@ -301,7 +317,7 @@ def write_currents(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
     """
 
     lst_filename = DEF_FILES["currents_list"]
-    file_pattern = DEF_FILES["currents_pattern"]
+    file_pattern = DEF_PATTERNS["currents_pattern"]
     path = Path(dir_path, lst_filename)
 
     _write_2dh_uv(df, path, file_pattern)
@@ -315,7 +331,7 @@ def write_winds(df: pd.DataFrame, dir_path: PosixPath | str) -> None:
         dir_path (PosixPath | str): directory path where will be created the files "lstwinds.pre" and all the "winds_*.txt"
     """
     lst_filename = DEF_FILES["winds_list"]
-    file_pattern = DEF_FILES["winds_pattern"]
+    file_pattern = DEF_PATTERNS["winds_pattern"]
     path = Path(dir_path, lst_filename)
 
     _write_2dh_uv(df, path, file_pattern)
@@ -333,7 +349,7 @@ def _write_2dh_uv(
         nan_value (int, optional): value for nan's in the file. Defaults to 0.
     """
 
-    path = Path(path) if isinstance(path, str) else path
+    path = Path(path)
 
     # Check variable-names
     for varname in ["time", "lon", "lat", "u", "v"]:
@@ -352,6 +368,9 @@ def _write_2dh_uv(
 
     df = df.sort_values(["time", "lon", "lat"])
 
+    if len(np.unique(np.diff(df["time"].unique()))) > 1:
+        raise ValueError("Forcing time steps are not constant!")
+
     grouped = df.groupby("time")
     for time, group in grouped:
         with open(path, "a") as f:
@@ -367,6 +386,116 @@ def _write_2dh_uv(
             float_format="%.8e",
             na_rep=nan_value,
         )
+
+
+def write_zero_currents(dir_path):
+    zero_df = pd.DataFrame({"time": [0], "u": [0], "v": [0]})
+    write_cte_currents(df=zero_df, dir_path=dir_path)
+
+
+def write_zero_winds(dir_path):
+    zero_df = pd.DataFrame({"time": [0], "hs": [0], "tp": [0], "dir": [0]})
+    _write_cte_waves(df=zero_df, dir_path=dir_path)
+
+
+def write_cte_currents(df, dir_path, nan_value: int = 0) -> None:
+
+    lst_filename = DEF_FILES["currents_list"]
+    path = Path(dir_path, lst_filename)
+    _write_cte_uv(df, nan_value, path)
+
+
+def write_cte_winds(df, dir_path, nan_value: int = 0) -> None:
+
+    lst_filename = DEF_FILES["winds_list"]
+    path = Path(dir_path, lst_filename)
+    _write_cte_uv(df, nan_value, path)
+
+
+def _write_cte_uv(df, nan_value, path) -> None:
+
+    _check_varnames(df, ["time", "u", "v"])
+    path = Path(path)
+    df = df.sort_values(["time"])
+    _check_cte_dt(df)
+
+    df.to_csv(
+        path,
+        sep="\t",
+        columns=["u", "v"],
+        header=False,
+        index=False,
+        float_format="%.8e",
+        na_rep=nan_value,
+    )
+
+
+def _write_cte_moddir(df, nan_value, path) -> None:
+
+    _check_varnames(df, ["time", "mod", "dir"])
+    path = Path(path)
+    df = df.sort_values(["time"])
+    _check_cte_dt(df)
+
+    df.to_csv(
+        path,
+        sep="\t",
+        columns=["mod", "dir"],
+        header=False,
+        index=False,
+        float_format="%.8e",
+        na_rep=nan_value,
+    )
+
+
+def write_cte_waves(df, dir_path, nan_value: int = 0) -> None:
+
+    lst_filename = DEF_FILES["waves_list"]
+    path = Path(dir_path, lst_filename)
+    _write_cte_waves(df, nan_value, path)
+
+
+def _write_cte_waves(df, nan_value, path) -> None:
+
+    _check_varnames(df, ["time", "hs", "tp", "dir"])
+    path = Path(path)
+    df = df.sort_values(["time"])
+    _check_cte_dt(df)
+
+    df.to_csv(
+        path,
+        sep="\t",
+        columns=["hs", "tp", "dir"],
+        header=False,
+        index=False,
+        float_format="%.8e",
+        na_rep=nan_value,
+    )
+
+
+def _check_cte_dt(df):
+    dt = np.unique(np.diff(df["time"].unique()))
+    if len(dt) > 1:
+        print(f"WARNING: Forcing time steps are not constant {dt}")
+
+
+def _check_lonlat_range(df, vars):
+    if "lon" in vars or "lat" in vars:
+        if (
+            df.lon.max() >= 180
+            or df.lon.min() <= -180
+            or df.lat.max() >= 90
+            or df.lat.min() <= -90
+        ):
+            raise ValueError(
+                "lon and lat values should be inside ranges lon[-180,180] and lat[-90,90]!"
+            )
+
+
+def _check_varnames(df, vars):
+    for varname in vars:
+        if varname not in df.keys():
+            raise ValueError(f"{varname} not founded in the DataFrame")
 
 
 # def read_currents_depth_avg(path_list):
@@ -385,27 +514,10 @@ def _write_2dh_uv(
 #     print("doing something...")
 
 
-# # 3. CONFIGURATION
-# def write_cfg(dir_path):
-#     print("doing something...")
-
-
-# def read_cfg(path):
-#     print("doing something...")
-
-
-# def write_run(dir_path):
-#     print("doing something...")
-
-
-# def read_run(path):
-#     print("doing something...")
-
-
 # # 4. RESULTS
 def read_particles_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_FILES["teseo_particles_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_particles_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's particles results files "*_properties_*.txt" to DataFrame
 
@@ -440,7 +552,7 @@ def read_particles_results(
 
 def read_properties_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_FILES["teseo_properties_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_properties_pattern"],
 ) -> pd.DataFrame:
     """Load TESEO's propierties results files "*_properties_*.txt" to DataFrame
 
@@ -479,7 +591,7 @@ def read_properties_results(
 
 def read_grids_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_FILES["teseo_grids_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_grids_pattern"],
     fullgrid_filename: str = DEF_FILES["teseo_grid_coordinates"],
 ) -> pd.DataFrame:
 
@@ -487,7 +599,7 @@ def read_grids_results(
 
     Args:
         dir_path (PosixPath | str):  path to the results directory
-        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_FILES["teseo_grids_pattern"].
+        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_PATTERNS["teseo_grids_pattern"].
         fullgrid_filename (str, optional): filename of results coordinates domain-grid. Defaults to  DEF_FILES["teseo_grid_coordinates"].
 
     Returns:
