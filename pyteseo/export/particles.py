@@ -41,7 +41,7 @@ def export_particles(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_PATTERNS["export_particles_pattern"].replace(".*", f".{file_format}"),
+            DEF_PATTERNS["export_particles"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):

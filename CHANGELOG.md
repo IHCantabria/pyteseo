@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.0.6 - ??/??/2023
+### Added:
+1) Objects for forcings and simulation(job)
+2) Create null forcings
+### Changed:
+1) modules are getting too big, I split structure into subpackages
+### Fixed:
+1) notebooks work
+<br/><br/>
+
+
 ## v0.0.5 - 19/01/2023
 ### Added:
 1) read results (particles, properties, and grids)

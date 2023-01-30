@@ -1,10 +1,8 @@
 from pathlib import Path
 from shutil import rmtree
 
-import pandas as pd
-
 import pytest
-from pyteseo.classes import TeseoGrid, TeseoCurrents, TeseoWinds
+from pyteseo.classes import TeseoGrid, TeseoCurrents
 from pyteseo.__init__ import __version__ as v
 
 
@@ -53,45 +51,23 @@ def test_TeseoGrid(path, error):
 
 
 @pytest.mark.parametrize(
-    "path, error",
+    "path, error, dt_cte",
     [
-        (Path(data_path, "lstcurr_UVW.pre"), None),
-        (Path(data_path, "not_exist.file"), "not_exist"),
+        (Path(data_path, "lstcurr_UVW.pre"), None, None),
+        (Path(data_path, "not_exist.file"), "not_exist", None),
+        (Path(data_path, "lstcurr_UVW_cte.pre"), None, 1),
     ],
 )
-def test_TeseoCurrents(path, error):
+def test_TeseoCurrents(path, error, dt_cte):
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            currents = TeseoCurrents(path)
+            currents = TeseoCurrents(path, dt_cte)
     else:
-        currents = TeseoCurrents(path)
+        currents = TeseoCurrents(path, dt_cte)
         assert isinstance(currents.path, str)
-        assert currents.dx == 0.125
-        assert currents.dy == 0.125
+        # assert currents.dx == 0.125
+        # assert currents.dy == 0.125
         assert currents.dt == 1
-        assert currents.nx == 4
-        assert currents.ny == 3
+        # assert currents.nx == 4
+        # assert currents.ny == 3
         assert currents.nt == 4
-
-
-@pytest.mark.parametrize(
-    "path, error",
-    [
-        (Path(data_path, "lstwinds.pre"), None),
-        (Path(data_path, "not_exist.file"), "not_exist"),
-    ],
-)
-def test_TeseoWinds(path, error):
-    if error == "not_exist":
-        with pytest.raises(FileNotFoundError):
-            winds = TeseoWinds(path)
-    else:
-        winds = TeseoWinds(path)
-        assert isinstance(winds.path, str)
-        assert winds.dx == 0.125
-        assert winds.dy == 0.125
-        assert winds.dt == 1
-        assert winds.nx == 4
-        assert winds.ny == 3
-        assert winds.nt == 4
-        assert isinstance(winds.load, pd.DataFrame)

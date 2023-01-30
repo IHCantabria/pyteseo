@@ -205,7 +205,7 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
 def _write_polygons(
     df: pd.DataFrame,
     dir_path: str | PosixPath,
-    filename_pattern: str = DEF_PATTERNS["polygon_pattern"],
+    filename_pattern: str = DEF_PATTERNS["polygons"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 

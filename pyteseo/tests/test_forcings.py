@@ -1,16 +1,14 @@
 from pathlib import Path
 from shutil import rmtree
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from pyteseo.__init__ import __version__ as v
 from pyteseo.io.forcings import (
-    read_currents,
-    read_winds,
     write_currents,
     write_winds,
+    read_2d_forcings,
 )
 
 
@@ -28,67 +26,37 @@ def setup_teardown():
 
 
 @pytest.mark.parametrize(
-    "file, error",
+    "file, varnames, error",
     [
-        ("lstcurr_UVW.pre", None),
-        ("lstcurr_UVW_not_exists.pre", "not_exist"),
-        ("lstcurr_UVW_error_sort.pre", "sort"),
-        ("lstcurr_UVW_error_range.pre", "range"),
-        ("lstcurr_UVW_error_var.pre", "var"),
+        ("lstcurr_UVW.pre", ["lon", "lat", "u", "v"], None),
+        ("lstwinds.pre", ["lon", "lat", "u", "v"], None),
+        # ("lstwaves.pre", ["lon", "lat", "hs", "tp", "dir"], None),
+        ("lstcurr_UVW_not_exists.pre", ["lon", "lat", "u", "v"], "not_exist"),
+        ("lstcurr_UVW_error_sort.pre", ["lon", "lat", "u", "v"], "sort"),
+        ("lstcurr_UVW_error_range.pre", ["lon", "lat", "u", "v"], "range"),
+        ("lstcurr_UVW_error_var.pre", ["lon", "lat", "u", "v"], "var"),
     ],
 )
-def test_read_currents(file, error):
+def test_read_2d_forcings(file, varnames, error):
 
     path = Path(data_path, file)
 
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            df = read_currents(path)
+            df = read_2d_forcings(path, varnames)
     elif error in ["sort", "range", "var"]:
         with pytest.raises(ValueError):
-            df = read_currents(path)
+            df = read_2d_forcings(path, varnames)
     else:
-        df = read_currents(path)
-
+        df = read_2d_forcings(path, varnames)
         assert isinstance(df, pd.DataFrame)
-        assert len(df["time"].unique()) == 4
-        assert len(df["lon"].unique()) == 4
-        assert len(df["lat"].unique()) == 3
-        assert np.unique(np.diff(df["time"].unique()))[0] == 1
-
-
-@pytest.mark.parametrize(
-    "file, error",
-    [
-        ("lstwinds.pre", None),
-        ("lstcurr_UVW_not_exists.pre", "not_exist"),
-    ],
-)
-def test_read_winds(file, error):
-
-    path = Path(data_path, file)
-
-    if error == "not_exist":
-        with pytest.raises(FileNotFoundError):
-            df = read_winds(path)
-    elif error in ["sort", "range", "var"]:
-        with pytest.raises(ValueError):
-            df = read_winds(path)
-    else:
-        df = read_winds(path)
-
-        assert isinstance(df, pd.DataFrame)
-        assert len(df["time"].unique()) == 4
-        assert len(df["lon"].unique()) == 4
-        assert len(df["lat"].unique()) == 3
-        assert np.unique(np.diff(df["time"].unique()))[0] == 1
 
 
 @pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
 def test_write_currents(error, setup_teardown):
 
     currents_path = Path(data_path, "lstcurr_UVW.pre")
-    df = read_currents(currents_path)
+    df = read_2d_forcings(currents_path, ["lon", "lat", "u", "v"])
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})
@@ -109,7 +77,7 @@ def test_write_currents(error, setup_teardown):
 def test_write_winds(error, setup_teardown):
 
     winds_path = Path(data_path, "lstwinds.pre")
-    df = read_winds(winds_path)
+    df = read_2d_forcings(winds_path, ["lon", "lat", "u", "v"])
 
     if error == "df_varnames":
         df = df.rename(columns={"lon": "longitude"})

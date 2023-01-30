@@ -12,7 +12,7 @@ from pyteseo.defaults import DEF_FILES, DEF_PATTERNS, DEF_TESEO_RESULTS_MAP
 # # 4. RESULTS
 def read_particles_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_PATTERNS["teseo_particles_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_particles"],
 ) -> pd.DataFrame:
     """Load TESEO's particles results files "*_properties_*.txt" to DataFrame
 
@@ -47,7 +47,7 @@ def read_particles_results(
 
 def read_properties_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_PATTERNS["teseo_properties_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_properties"],
 ) -> pd.DataFrame:
     """Load TESEO's propierties results files "*_properties_*.txt" to DataFrame
 
@@ -86,7 +86,7 @@ def read_properties_results(
 
 def read_grids_results(
     dir_path: PosixPath | str,
-    file_pattern: str = DEF_PATTERNS["teseo_grids_pattern"],
+    file_pattern: str = DEF_PATTERNS["teseo_grids"],
     fullgrid_filename: str = DEF_FILES["teseo_grid_coordinates"],
 ) -> pd.DataFrame:
 
@@ -94,7 +94,7 @@ def read_grids_results(
 
     Args:
         dir_path (PosixPath | str):  path to the results directory
-        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_PATTERNS["teseo_grids_pattern"].
+        file_pattern (str, optional): file pattern of particles restuls. Defaults to DEF_PATTERNS["teseo_grids"].
         fullgrid_filename (str, optional): filename of results coordinates domain-grid. Defaults to  DEF_FILES["teseo_grid_coordinates"].
 
     Returns:

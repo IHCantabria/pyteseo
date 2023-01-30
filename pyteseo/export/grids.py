@@ -37,7 +37,7 @@ def export_grids(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_PATTERNS["export_grids_pattern"].replace(".*", f".{file_format}"),
+            DEF_PATTERNS["export_grids"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):

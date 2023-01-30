@@ -32,7 +32,7 @@ def export_properties(
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(f"Invalid format. Allowed formats {allowed_formats}")
-    filename_pattern = DEF_PATTERNS["export_properties_pattern"].replace(
+    filename_pattern = DEF_PATTERNS["export_properties"].replace(
         ".*", f".{file_format}"
     )
     path_pattern = output_dir / filename_pattern

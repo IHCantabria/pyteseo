@@ -58,17 +58,17 @@ def set_teseo_paths(
     if not lst_currents:
         zero_df = pd.DataFrame({"time": [0], "u": [0], "v": [0]})
         write_cte_currents(df=zero_df, dir_path=output_dir_path)
-        lst_currents = Path(output_dir_path, DEF_FILES["currents_list"])
+        lst_currents = Path(output_dir_path, DEF_FILES["currents"])
 
     if not lst_winds:
         zero_df = pd.DataFrame({"time": [0], "u": [0], "v": [0]})
         write_cte_winds(df=zero_df, dir_path=output_dir_path)
-        lst_winds = Path(output_dir_path, DEF_FILES["currents_list"])
+        lst_winds = Path(output_dir_path, DEF_FILES["currents"])
 
     if not lst_waves:
         zero_df = pd.DataFrame({"time": [0], "hs": [0], "tp": [0], "dir": [0]})
         write_cte_waves(df=zero_df, dir_path=output_dir_path)
-        lst_waves = Path(output_dir_path, DEF_FILES["waves_list"])
+        lst_waves = Path(output_dir_path, DEF_FILES["waves"])
 
     return {
         "domain_grid_path": Path(domain_grid_path)
