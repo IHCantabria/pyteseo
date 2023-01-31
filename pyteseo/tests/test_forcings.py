@@ -6,9 +6,11 @@ import pytest
 
 from pyteseo.__init__ import __version__ as v
 from pyteseo.io.forcings import (
-    write_currents,
-    write_winds,
-    read_2d_forcings,
+    read_2d_forcing,
+    write_2d_foring,
+    read_cte_forcing,
+    write_cte_forcing,
+    write_null_forcing,
 )
 
 
@@ -28,13 +30,10 @@ def setup_teardown():
 @pytest.mark.parametrize(
     "file, varnames, error",
     [
-        ("lstcurr_UVW.pre", ["lon", "lat", "u", "v"], None),
-        ("lstwinds.pre", ["lon", "lat", "u", "v"], None),
-        # ("lstwaves.pre", ["lon", "lat", "hs", "tp", "dir"], None),
-        ("lstcurr_UVW_not_exists.pre", ["lon", "lat", "u", "v"], "not_exist"),
-        ("lstcurr_UVW_error_sort.pre", ["lon", "lat", "u", "v"], "sort"),
-        ("lstcurr_UVW_error_range.pre", ["lon", "lat", "u", "v"], "range"),
-        ("lstcurr_UVW_error_var.pre", ["lon", "lat", "u", "v"], "var"),
+        ("lstcurr_UVW.pre", "currents", None),
+        ("lstwinds.pre", "winds", None),
+        ("lstwaves.pre", "waves", None),
+        ("lstcurr_UVW_not_exists.pre", "currents", "not_exist"),
     ],
 )
 def test_read_2d_forcings(file, varnames, error):
@@ -43,52 +42,79 @@ def test_read_2d_forcings(file, varnames, error):
 
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            df = read_2d_forcings(path, varnames)
+            df = read_2d_forcing(path, varnames)
     elif error in ["sort", "range", "var"]:
         with pytest.raises(ValueError):
-            df = read_2d_forcings(path, varnames)
+            df = read_2d_forcing(path, varnames)
     else:
-        df = read_2d_forcings(path, varnames)
+        df = read_2d_forcing(path, varnames)
         assert isinstance(df, pd.DataFrame)
 
 
-@pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
-def test_write_currents(error, setup_teardown):
+@pytest.mark.parametrize(
+    "type, in_file, out_file",
+    [
+        ("currents", "lstcurr_UVW.pre", "currents_001h.txt"),
+        ("winds", "lstwinds.pre", "winds_001h.txt"),
+        ("waves", "lstwaves.pre", "waves_001h.txt"),
+    ],
+)
+def test_write_2d_forcings(type, in_file, out_file, setup_teardown):
+    df = read_2d_forcing(Path(data_path, in_file), type)
 
-    currents_path = Path(data_path, "lstcurr_UVW.pre")
-    df = read_2d_forcings(currents_path, ["lon", "lat", "u", "v"])
-
-    if error == "df_varnames":
-        df = df.rename(columns={"lon": "longitude"})
-        with pytest.raises(ValueError):
-            write_currents(df, tmp_path)
-
-    elif error == "lonlat_range":
-        df.loc[:, ("lon")].values[0] = 360
-        with pytest.raises(ValueError):
-            write_currents(df, tmp_path)
-
-    else:
-        write_currents(df, tmp_path)
-        assert Path(tmp_path, "lstcurr_UVW.pre").exists()
+    write_2d_foring(df=df, dir_path=tmp_path, type=type)
+    assert Path(tmp_path, in_file).exists()
+    assert Path(tmp_path, out_file).exists()
 
 
-@pytest.mark.parametrize("error", [(None), ("df_varnames"), ("lonlat_range")])
-def test_write_winds(error, setup_teardown):
+@pytest.mark.parametrize(
+    "type, in_file, dt",
+    [
+        ("currents", "lstcurr_UVW_cte.pre", 1),
+        ("winds", "lstwinds_cte.pre", 1),
+        ("waves", "lstwaves_cte.pre", 1),
+    ],
+)
+def test_read_cte_forcings(in_file, type, dt, setup_teardown):
 
-    winds_path = Path(data_path, "lstwinds.pre")
-    df = read_2d_forcings(winds_path, ["lon", "lat", "u", "v"])
+    df = read_cte_forcing(Path(data_path, in_file), type, dt)
+    assert "time" in df.keys()
+    if type in ["currents", "winds"]:
+        assert "mod" in df.keys()
+        assert "dir" in df.keys()
+    elif type == "waves":
+        assert "hs" in df.keys()
+        assert "dir" in df.keys()
+        assert "tp" in df.keys()
 
-    if error == "df_varnames":
-        df = df.rename(columns={"lon": "longitude"})
-        with pytest.raises(ValueError):
-            write_winds(df, tmp_path)
 
-    elif error == "lonlat_range":
-        df.loc[:, ("lon")].values[0] = 360
-        with pytest.raises(ValueError):
-            write_winds(df, tmp_path)
+@pytest.mark.parametrize(
+    "type, in_file, out_file, dt",
+    [
+        ("currents", "lstcurr_UVW_cte.pre", "lstcurr_UVW.pre", 1),
+        ("winds", "lstwinds_cte.pre", "lstwinds.pre", 1),
+        ("waves", "lstwaves_cte.pre", "lstwaves.pre", 1),
+    ],
+)
+def test_write_cte_forcings(type, in_file, out_file, dt, setup_teardown):
+    df = read_cte_forcing(Path(data_path, in_file), type, dt)
+    write_cte_forcing(df, tmp_path, type)
 
-    else:
-        write_winds(df, tmp_path)
-        assert Path(tmp_path, "lstwinds.pre").exists()
+    assert Path(tmp_path, out_file).exists()
+
+
+@pytest.mark.parametrize(
+    "type, out_file",
+    [
+        ("currents", "lstcurr_UVW.pre"),
+        ("winds", "lstwinds.pre"),
+        ("waves", "lstwaves.pre"),
+    ],
+)
+def test_write_null_forcing(type, out_file, setup_teardown):
+    write_null_forcing(tmp_path, type)
+
+    assert Path(tmp_path, out_file).exists()
+    df = read_cte_forcing(Path(tmp_path, out_file), type, 1)
+    assert len(df.index) == 1
+    assert (df.values == 0).all()

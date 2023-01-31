@@ -13,9 +13,9 @@
     },
     "patterns": {
         "polygons": "coastline_polygon_*.dat",
-        "currents": "currents_*.txt",
-        "winds": "winds_*.txt",
-        "waves": "waves_*.txt",
+        "currents": "currents_*h.txt",
+        "winds": "winds_*h.txt",
+        "waves": "waves_*h.txt",
         "cfg": "*.cfg",
         "run": "*.run",
         "teseo_particles": "*_particles_*.txt",
@@ -25,16 +25,23 @@
         "export_properties": "properties_*.*",
         "export_grids": "grids_*.*"
     },
-    "vars": {
-        "currents_u": "u",
-        "currents_v": "v",
-        "currents_depthavg_u": "u_depthavg",
-        "currents_depthavg_v": "v_depthavg",
-        "winds_u": "u",
-        "winds_v": "v",
-        "waves_hs": "hs",
-        "waves_tp": "tp",
-        "waves_dir": "dir"
+    "varnames": {
+        "currents": {
+            "coords": ["time", "lon", "lat"],
+            "vars": ["u", "v"]
+        },
+        "winds": {
+            "coords": ["time", "lon", "lat"],
+            "vars": ["u", "v"]
+        },
+        "waves": {
+            "coords": ["time", "lon", "lat"],
+            "vars": ["hs", "dir", "tp"]
+        },
+        "currents_depthavg": {
+            "coords": ["time", "lon", "lat"],
+            "vars": ["u_depthavg", "v_depthavg"]
+        }
     },
     "coords": {
         "x": "lon",

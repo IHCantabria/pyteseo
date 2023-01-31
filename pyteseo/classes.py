@@ -1,10 +1,11 @@
 from pathlib import Path, PosixPath, WindowsPath
 import numpy as np
+import pandas as pd
 
-from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES
+from pyteseo.defaults import DEF_DIRS, DEF_FILES, DEF_VARS, DEF_COORDS
 from pyteseo.io.forcings import (
-    read_2d_forcings,
-    read_cte_forcings,
+    read_2d_forcing,
+    read_cte_forcing,
     # write_cte_currents,
     # write_cte_winds,
     # write_cte_waves,
@@ -80,10 +81,10 @@ class TeseoGrid:
         self.type = "domain_grid"
         self.path = str(Path(path).resolve())
         df = read_grid(self.path)
-        self.dx = _calculate_dx(df)
-        self.dy = _calculate_dy(df)
-        self.nx = _calculate_nx(df)
-        self.ny = _calculate_ny(df)
+        self.dx = _calculate_dx(df, DEF_COORDS["x"])
+        self.dy = _calculate_dy(df, DEF_COORDS["y"])
+        self.nx = _calculate_nx(df, DEF_COORDS["x"])
+        self.ny = _calculate_ny(df, DEF_COORDS["y"])
 
     @property
     def load(self):
@@ -95,11 +96,11 @@ class TeseoCurrents:
         self, path: str | PosixPath | WindowsPath, dt_cte: float | None = None
     ):
         self.type = "currents"
-        self.varnames = ["time", "lon", "lat", "u", "v"]
+        self.varnames = DEF_VARS[self.type]
         self.path = str(Path(path).resolve())
 
         if dt_cte:
-            df = read_cte_forcings(self.path, self.varnames[3:])
+            df = read_cte_forcing(self.path, self.varnames["vars"])
             self.dx = None
             self.dy = None
             self.dt = dt_cte
@@ -108,64 +109,100 @@ class TeseoCurrents:
             self.nt = len(df)
 
         else:
-            df = read_2d_forcings(self.path, self.varnames[1:])
+            df = read_2d_forcing(
+                self.path, self.varnames["coords"][1:] + self.varnames["vars"]
+            )
 
-            self.dx = _calculate_dx(df)
-            self.dy = _calculate_dy(df)
-            self.dt = _calculate_dt(df)
-            self.nx = _calculate_nx(df)
-            self.ny = _calculate_ny(df)
-            self.nt = _calculate_nt(df)
+            self.dt = _calculate_dt(df, self.varnames["coords"][0])
+            self.dx = _calculate_dx(df, self.varnames["coords"][1])
+            self.dy = _calculate_dy(df, self.varnames["coords"][2])
+            self.nt = _calculate_nt(df, self.varnames["coords"][0])
+            self.nx = _calculate_nx(df, self.varnames["coords"][1])
+            self.ny = _calculate_ny(df, self.varnames["coords"][2])
 
     @property
     def load(self):
         if self.dx:
-            return read_2d_forcings(self.path, self.varnames[1:])
+            return read_2d_forcing(self.path, self.varnames[1:])
         else:
-            return read_cte_forcings(self.path, self.varnames[3:])
+            return read_cte_forcing(self.path, self.varnames[3:])
 
 
 class TeseoWinds:
-    def __init__(self, path: str | PosixPath | WindowsPath):
+    def __init__(
+        self, path: str | PosixPath | WindowsPath, dt_cte: float | None = None
+    ):
         self.type = "winds"
-        self.file_columns = ["lon", "lat", "u", "v"]
+        self.varnames = DEF_VARS[self.type]
         self.path = str(Path(path).resolve())
 
-        df = read_2d_forcings(self.path, self.file_columns)
+        if dt_cte:
+            df = read_cte_forcing(self.path, self.varnames["vars"])
+            self.dx = None
+            self.dy = None
+            self.dt = dt_cte
+            self.nx = None
+            self.ny = None
+            self.nt = len(df)
 
-        self.dx = _calculate_dx(df)
-        self.dy = _calculate_dy(df)
-        self.dt = _calculate_dt(df)
-        self.nx = _calculate_nx(df)
-        self.ny = _calculate_ny(df)
-        self.nt = _calculate_nt(df)
+        else:
+            df = read_2d_forcing(
+                self.path, self.varnames["coords"][1:] + self.varnames["vars"]
+            )
+
+            self.dt = _calculate_dt(df, self.varnames["coords"][0])
+            self.dx = _calculate_dx(df, self.varnames["coords"][1])
+            self.dy = _calculate_dy(df, self.varnames["coords"][2])
+            self.nt = _calculate_nt(df, self.varnames["coords"][0])
+            self.nx = _calculate_nx(df, self.varnames["coords"][1])
+            self.ny = _calculate_ny(df, self.varnames["coords"][2])
 
     @property
     def load(self):
-        return read_2d_forcings(self.path, self.vars)
+        if self.dx:
+            return read_2d_forcing(self.path, self.varnames[1:])
+        else:
+            return read_cte_forcing(self.path, self.varnames[3:])
 
 
 class TeseoWaves:
-    def __init__(self, path: str | PosixPath | WindowsPath):
+    def __init__(
+        self, path: str | PosixPath | WindowsPath, dt_cte: float | None = None
+    ):
         self.type = "waves"
-        self.file_columns = ["lon", "lat", "hs", "tp", "dir"]
+        self.varnames = DEF_VARS[self.type]
         self.path = str(Path(path).resolve())
 
-        df = read_2d_forcings(self.path, self.file_columns)
+        if dt_cte:
+            df = read_cte_forcing(self.path, self.varnames["vars"])
+            self.dx = None
+            self.dy = None
+            self.dt = dt_cte
+            self.nx = None
+            self.ny = None
+            self.nt = len(df)
 
-        self.dx = _calculate_dx(df)
-        self.dy = _calculate_dy(df)
-        self.dt = _calculate_dt(df)
-        self.nx = _calculate_nx(df)
-        self.ny = _calculate_ny(df)
-        self.nt = _calculate_nt(df)
+        else:
+            df = read_2d_forcing(
+                self.path, self.varnames["coords"][1:] + self.varnames["vars"]
+            )
+
+            self.dt = _calculate_dt(df, self.varnames["coords"][0])
+            self.dx = _calculate_dx(df, self.varnames["coords"][1])
+            self.dy = _calculate_dy(df, self.varnames["coords"][2])
+            self.nt = _calculate_nt(df, self.varnames["coords"][0])
+            self.nx = _calculate_nx(df, self.varnames["coords"][1])
+            self.ny = _calculate_ny(df, self.varnames["coords"][2])
 
     @property
     def load(self):
-        return read_2d_forcings(self.path, self.vars)
+        if self.dx:
+            return read_2d_forcing(self.path, self.varnames[1:])
+        else:
+            return read_cte_forcing(self.path, self.varnames[3:])
 
 
-def _calculate_dx(df, coordname: str = DEF_COORDS["x"]):
+def _calculate_dx(df: pd.DataFrame, coordname: str):
     dx = np.unique(np.diff(df[coordname].unique()))
     if len(dx) == 1:
         return dx[0]
@@ -174,7 +211,7 @@ def _calculate_dx(df, coordname: str = DEF_COORDS["x"]):
         return dx[0]
 
 
-def _calculate_dy(df, coordname: str = DEF_COORDS["y"]):
+def _calculate_dy(df: pd.DataFrame, coordname: str):
     dy = np.unique(np.diff(df[coordname].unique()))
     if len(dy) == 1:
         return dy[0]
@@ -183,16 +220,7 @@ def _calculate_dy(df, coordname: str = DEF_COORDS["y"]):
         return dy[0]
 
 
-def _calculate_dz(df, coordname: str = DEF_COORDS["z"]):
-    dz = np.unique(np.diff(df[coordname].unique()))
-    if len(dz) == 1:
-        return dz[0]
-    else:
-        print("WARNING: dz is not constant!")
-        return dz[0]
-
-
-def _calculate_dt(df, coordname: str = DEF_COORDS["t"]):
+def _calculate_dt(df: pd.DataFrame, coordname: str):
     dt = np.unique(np.diff(df[coordname].unique()))
     if len(dt) == 1:
         return dt[0]
@@ -201,17 +229,13 @@ def _calculate_dt(df, coordname: str = DEF_COORDS["t"]):
         return dt[0]
 
 
-def _calculate_nx(df, coordname: str = DEF_COORDS["x"]):
+def _calculate_nx(df: pd.DataFrame, coordname: str):
     return len(df[coordname].unique())
 
 
-def _calculate_ny(df, coordname: str = DEF_COORDS["y"]):
+def _calculate_ny(df: pd.DataFrame, coordname: str):
     return len(df[coordname].unique())
 
 
-def _calculate_nz(df, coordname: str = DEF_COORDS["z"]):
-    return len(df[coordname].unique())
-
-
-def _calculate_nt(df, coordname: str = DEF_COORDS["t"]):
+def _calculate_nt(df: pd.DataFrame, coordname: str):
     return len(df[coordname].unique())

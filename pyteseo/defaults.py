@@ -9,6 +9,6 @@ defaults = json.loads(data)
 DEF_DIRS = defaults["dirs"]
 DEF_FILES = defaults["files"]
 DEF_PATTERNS = defaults["patterns"]
-DEF_VARS = defaults["vars"]
+DEF_VARS = defaults["varnames"]
 DEF_COORDS = defaults["coords"]
 DEF_TESEO_RESULTS_MAP = defaults["teseo_results_map"]
