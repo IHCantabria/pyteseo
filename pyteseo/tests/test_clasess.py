@@ -2,7 +2,7 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
-from pyteseo.classes import TeseoGrid, TeseoCurrents
+from pyteseo.classes import TeseoGrid, TeseoCurrents, TeseoWinds, TeseoWaves
 from pyteseo.defaults import DEF_FILES
 from pyteseo.__init__ import __version__ as v
 
@@ -74,3 +74,55 @@ def test_TeseoCurrents(path, dt_cte):
         assert "lat" in currents.load.keys()
         assert "u" in currents.load.keys()
         assert "v" in currents.load.keys()
+
+
+@pytest.mark.parametrize(
+    "path, dt_cte",
+    [
+        (Path(data_path, DEF_FILES["winds"]), None),
+        (Path(data_path, "lstwinds_cte.pre"), 1),
+    ],
+)
+def test_TeseoWinds(path, dt_cte):
+
+    winds = TeseoWinds(path, dt_cte)
+    assert isinstance(winds.path, str)
+    assert winds.dt == 1
+    assert winds.nt == 4
+    if dt_cte:
+        assert "time" in winds.load.keys()
+        assert "mod" in winds.load.keys()
+        assert "dir" in winds.load.keys()
+    else:
+        assert "time" in winds.load.keys()
+        assert "lon" in winds.load.keys()
+        assert "lat" in winds.load.keys()
+        assert "u" in winds.load.keys()
+        assert "v" in winds.load.keys()
+
+
+@pytest.mark.parametrize(
+    "path, dt_cte",
+    [
+        (Path(data_path, DEF_FILES["waves"]), None),
+        (Path(data_path, "lstwaves_cte.pre"), 1),
+    ],
+)
+def test_TeseoWaves(path, dt_cte):
+
+    winds = TeseoWaves(path, dt_cte)
+    assert isinstance(winds.path, str)
+    assert winds.dt == 1
+    assert winds.nt == 4
+    if dt_cte:
+        assert "time" in winds.load.keys()
+        assert "hs" in winds.load.keys()
+        assert "dir" in winds.load.keys()
+        assert "tp" in winds.load.keys()
+    else:
+        assert "time" in winds.load.keys()
+        assert "lon" in winds.load.keys()
+        assert "lat" in winds.load.keys()
+        assert "hs" in winds.load.keys()
+        assert "dir" in winds.load.keys()
+        assert "tp" in winds.load.keys()
