@@ -3,55 +3,52 @@ import numpy as np
 import pandas as pd
 
 from pyteseo.defaults import DEF_DIRS, DEF_FILES, DEF_VARS, DEF_COORDS
-from pyteseo.io.forcings import (
-    read_2d_forcing,
-    read_cte_forcing,
-    # write_cte_currents,
-    # write_cte_winds,
-    # write_cte_waves,
-)
-
+from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
 from pyteseo.io.domain import read_grid
 
 
 class TeseoWrapper:
-    def __init__(self, job_path: str | PosixPath | WindowsPath):
+    def __init__(self, job_path: str):
 
         path = Path(job_path).resolve()
         if not path.exists():
             path.mkdir(parents=True)
 
-        input_dir = Path(path + DEF_DIRS["inputs"])
+        input_dir = Path(path, DEF_DIRS["inputs"])
         if not input_dir.exists():
             input_dir.mkdir(parents=True)
 
         self.path = str(path)
         self.input_dir = str(input_dir)
-        self.load_inputs()
 
-    def load_inputs(self, input_dir):
+    def load_inputs(self, currents_dt_cte=1, winds_dt_cte=1, waves_dt_cte=1):
 
-        input_dir = Path(input_dir).resolve()
+        input_dir = Path(self.input_dir).resolve()
 
         if Path(input_dir, DEF_FILES["grid"]).exists():
-            self.grid = TeseoGrid(input_dir)
+            self.grid = TeseoGrid(Path(input_dir, DEF_FILES["grid"]))
         else:
-            self.grid = None
+            raise ValueError("No grid-file in the input directory")
 
         if Path(input_dir, DEF_FILES["currents"]).exists():
-            self.currents = TeseoCurrents(input_dir)
+            self.currents = TeseoCurrents(
+                Path(input_dir, DEF_FILES["currents"]), currents_dt_cte
+            )
         else:
             self.currents = None
+            write_null_forcing(input_dir, forcing_type="currents")
 
         if Path(input_dir, DEF_FILES["winds"]).exists():
-            self.winds = TeseoWinds(input_dir)
+            self.winds = TeseoWinds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
         else:
             self.winds = None
+            write_null_forcing(input_dir, forcing_type="winds")
 
         if Path(input_dir, DEF_FILES["waves"]).exists():
-            self.waves = TeseoWaves(input_dir)
+            self.waves = TeseoWaves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
         else:
             self.waves = None
+            write_null_forcing(input_dir, forcing_type="waves")
 
     def setup(user_parameters):
         pass
@@ -92,14 +89,12 @@ class TeseoGrid:
 
 
 class TeseoCurrents:
-    def __init__(
-        self, lst_path: str | PosixPath | WindowsPath, dt_cte: float | None = None
-    ):
+    def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "currents"
         self.varnames = DEF_VARS[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
-        if dt_cte:
+        if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
             df = read_cte_forcing(self.path, self.forcing_type, dt_cte)
             self.dx = None
             self.dy = None
@@ -127,14 +122,12 @@ class TeseoCurrents:
 
 
 class TeseoWinds:
-    def __init__(
-        self, lst_path: str | PosixPath | WindowsPath, dt_cte: float | None = None
-    ):
+    def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "winds"
         self.varnames = DEF_VARS[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
-        if dt_cte:
+        if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
             df = read_cte_forcing(self.path, self.forcing_type, dt_cte)
             self.dx = None
             self.dy = None
@@ -162,14 +155,12 @@ class TeseoWinds:
 
 
 class TeseoWaves:
-    def __init__(
-        self, lst_path: str | PosixPath | WindowsPath, dt_cte: float | None = None
-    ):
+    def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "waves"
         self.varnames = DEF_VARS[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
-        if dt_cte:
+        if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
             df = read_cte_forcing(self.path, self.forcing_type, dt_cte)
             self.dx = None
             self.dy = None

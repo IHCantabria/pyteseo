@@ -1,11 +1,17 @@
 from pathlib import Path
-from shutil import rmtree
+from shutil import copyfile, rmtree
 
 import pytest
-from pyteseo.classes import TeseoGrid, TeseoCurrents, TeseoWinds, TeseoWaves
-from pyteseo.defaults import DEF_FILES
-from pyteseo.__init__ import __version__ as v
 
+from pyteseo.__init__ import __version__ as v
+from pyteseo.classes import (
+    TeseoCurrents,
+    TeseoGrid,
+    TeseoWaves,
+    TeseoWinds,
+    TeseoWrapper,
+)
+from pyteseo.defaults import DEF_FILES
 
 data_path = Path(__file__).parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
@@ -20,15 +26,41 @@ def setup_teardown():
         rmtree(tmp_path)
 
 
-# def test_TeseoWrapper():
+@pytest.mark.parametrize(
+    "input_files, input_files_dst, error",
+    [
+        (
+            ["grid.dat", "lstcurr_UVW_cte.pre", "lstwinds_cte.pre"],
+            ["grid.dat", "lstcurr_UVW.pre", "lstwinds.pre"],
+            None,
+        ),
+        (
+            ["lstcurr_UVW_cte.pre", "lstwinds_cte.pre"],
+            ["lstcurr_UVW.pre", "lstwinds.pre"],
+            "no_grid",
+        ),
+    ],
+)
+def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
 
-#     job = TeseoWrapper(input_dir=data_path)
-#     assert job.grid is not None
-#     assert job.coastline is None
-#     assert job.currents is not None
-#     assert job.winds is not None
-#     # assert job.waves is None
-#     # assert job.currents_depthavg is None
+    if not Path(tmp_path, "inputs").exists():
+        Path(tmp_path, "inputs").mkdir()
+    for src_file, dst_file in zip(input_files, input_files_dst):
+        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
+
+    job = TeseoWrapper(job_path=tmp_path)
+    assert Path(job.path).exists()
+    assert Path(job.input_dir).exists()
+
+    if error:
+        with pytest.raises(ValueError):
+            job.load_inputs()
+    else:
+        job.load_inputs()
+        assert Path(job.input_dir, DEF_FILES["grid"]).exists()
+        assert Path(job.input_dir, DEF_FILES["currents"]).exists()
+        assert Path(job.input_dir, DEF_FILES["winds"]).exists()
+        assert Path(job.input_dir, DEF_FILES["waves"]).exists()
 
 
 @pytest.mark.parametrize(
