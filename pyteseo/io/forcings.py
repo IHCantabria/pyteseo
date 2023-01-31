@@ -17,9 +17,9 @@ from pyteseo.io.utils import (
 
 
 # 2. FORCINGS
-def read_cte_forcing(path: str, type: str, dt: float) -> pd.DataFrame:
+def read_cte_forcing(path: str, forcing_type: str, dt: float) -> pd.DataFrame:
 
-    file_column_names = DEF_VARS[type]["vars"]
+    file_column_names = DEF_VARS[forcing_type]["vars"]
 
     path = Path(path)
     df = pd.read_csv(path, delimiter="\s+", header=None)
@@ -29,13 +29,13 @@ def read_cte_forcing(path: str, type: str, dt: float) -> pd.DataFrame:
     df.insert(0, "time", df.index.values * dt)
 
     # FIXME
-    if type in ["currents", "winds"]:
+    if forcing_type in ["currents", "winds"]:
         df = df.rename(columns={"u": "mod", "v": "dir"})
 
     return df
 
 
-def read_2d_forcing(path: str, type: str) -> pd.DataFrame:
+def read_2d_forcing(path: str, forcing_type: str) -> pd.DataFrame:
     """Read TESEO 2d forcings from list files
 
     Args:
@@ -45,8 +45,8 @@ def read_2d_forcing(path: str, type: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Table data of currents, winds, or waves [time, +varnames].
     """
-    coordnames = DEF_VARS[type]["coords"]
-    varnames = DEF_VARS[type]["vars"]
+    coordnames = DEF_VARS[forcing_type]["coords"]
+    varnames = DEF_VARS[forcing_type]["vars"]
     file_column_names = (coordnames + varnames)[1:]
 
     path = Path(path)
@@ -80,12 +80,14 @@ def read_list_file(path):
     return files
 
 
-def write_cte_forcing(df: pd.DataFrame, dir_path: str, type: str, nan_value=0) -> None:
-    lst_filename = DEF_FILES[type]
-    coordnames = DEF_VARS[type]["coords"][0]
-    varnames = DEF_VARS[type]["vars"]
+def write_cte_forcing(
+    df: pd.DataFrame, dir_path: str, forcing_type: str, nan_value=0
+) -> None:
+    lst_filename = DEF_FILES[forcing_type]
+    coordnames = DEF_VARS[forcing_type]["coords"][0]
+    varnames = DEF_VARS[forcing_type]["vars"]
     # FIXME - Use always UV
-    if type in ["currents", "winds"]:
+    if forcing_type in ["currents", "winds"]:
         varnames = ["mod", "dir"]
     path = Path(dir_path, lst_filename)
 
@@ -104,13 +106,13 @@ def write_cte_forcing(df: pd.DataFrame, dir_path: str, type: str, nan_value=0) -
 
 
 def write_2d_foring(
-    df: pd.DataFrame, dir_path: str, type: str, nan_value: int = 0
+    df: pd.DataFrame, dir_path: str, forcing_type: str, nan_value: int = 0
 ) -> None:
 
-    lst_filename = DEF_FILES[type]
-    file_pattern = DEF_PATTERNS[type]
-    varnames = DEF_VARS[type]["vars"]
-    coordnames = DEF_VARS[type]["coords"]
+    lst_filename = DEF_FILES[forcing_type]
+    file_pattern = DEF_PATTERNS[forcing_type]
+    varnames = DEF_VARS[forcing_type]["vars"]
+    coordnames = DEF_VARS[forcing_type]["coords"]
     path = Path(dir_path, lst_filename)
 
     df = df.sort_values(coordnames)
@@ -136,13 +138,13 @@ def write_2d_foring(
         )
 
 
-def write_null_forcing(dir_path, type):
+def write_null_forcing(dir_path, forcing_type):
 
-    columns = [DEF_VARS[type]["coords"][0]] + DEF_VARS[type]["vars"]
+    columns = [DEF_VARS[forcing_type]["coords"][0]] + DEF_VARS[forcing_type]["vars"]
     df = pd.DataFrame([{var: 0 for var in columns}])
 
     # FIXME
-    if type in ["currents", "winds"]:
+    if forcing_type in ["currents", "winds"]:
         df = df.rename(columns={"u": "mod", "v": "dir"})
 
-    write_cte_forcing(df, dir_path, type, 1)
+    write_cte_forcing(df, dir_path, forcing_type, 1)

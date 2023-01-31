@@ -62,7 +62,7 @@ def test_read_2d_forcings(file, varnames, error):
 def test_write_2d_forcings(type, in_file, out_file, setup_teardown):
     df = read_2d_forcing(Path(data_path, in_file), type)
 
-    write_2d_foring(df=df, dir_path=tmp_path, type=type)
+    write_2d_foring(df=df, dir_path=tmp_path, forcing_type=type)
     assert Path(tmp_path, in_file).exists()
     assert Path(tmp_path, out_file).exists()
 

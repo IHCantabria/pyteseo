@@ -3,6 +3,7 @@ from shutil import rmtree
 
 import pytest
 from pyteseo.classes import TeseoGrid, TeseoCurrents
+from pyteseo.defaults import DEF_FILES
 from pyteseo.__init__ import __version__ as v
 
 
@@ -51,23 +52,25 @@ def test_TeseoGrid(path, error):
 
 
 @pytest.mark.parametrize(
-    "path, error, dt_cte",
+    "path, dt_cte",
     [
-        (Path(data_path, "lstcurr_UVW.pre"), None, None),
-        (Path(data_path, "not_exist.file"), "not_exist", None),
-        (Path(data_path, "lstcurr_UVW_cte.pre"), None, 1),
+        (Path(data_path, DEF_FILES["currents"]), None),
+        (Path(data_path, "lstcurr_UVW_cte.pre"), 1),
     ],
 )
-def test_TeseoCurrents(path, error, dt_cte):
-    if error == "not_exist":
-        with pytest.raises(FileNotFoundError):
-            currents = TeseoCurrents(path, dt_cte)
+def test_TeseoCurrents(path, dt_cte):
+
+    currents = TeseoCurrents(path, dt_cte)
+    assert isinstance(currents.path, str)
+    assert currents.dt == 1
+    assert currents.nt == 4
+    if dt_cte:
+        assert "time" in currents.load.keys()
+        assert "mod" in currents.load.keys()
+        assert "dir" in currents.load.keys()
     else:
-        currents = TeseoCurrents(path, dt_cte)
-        assert isinstance(currents.path, str)
-        # assert currents.dx == 0.125
-        # assert currents.dy == 0.125
-        assert currents.dt == 1
-        # assert currents.nx == 4
-        # assert currents.ny == 3
-        assert currents.nt == 4
+        assert "time" in currents.load.keys()
+        assert "lon" in currents.load.keys()
+        assert "lat" in currents.load.keys()
+        assert "u" in currents.load.keys()
+        assert "v" in currents.load.keys()

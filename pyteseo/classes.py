@@ -93,14 +93,14 @@ class TeseoGrid:
 
 class TeseoCurrents:
     def __init__(
-        self, path: str | PosixPath | WindowsPath, dt_cte: float | None = None
+        self, lst_path: str | PosixPath | WindowsPath, dt_cte: float | None = None
     ):
-        self.type = "currents"
-        self.varnames = DEF_VARS[self.type]
-        self.path = str(Path(path).resolve())
+        self.forcing_type = "currents"
+        self.varnames = DEF_VARS[self.forcing_type]
+        self.path = str(Path(lst_path).resolve())
 
         if dt_cte:
-            df = read_cte_forcing(self.path, self.varnames["vars"])
+            df = read_cte_forcing(self.path, self.forcing_type, dt_cte)
             self.dx = None
             self.dy = None
             self.dt = dt_cte
@@ -109,9 +109,7 @@ class TeseoCurrents:
             self.nt = len(df)
 
         else:
-            df = read_2d_forcing(
-                self.path, self.varnames["coords"][1:] + self.varnames["vars"]
-            )
+            df = read_2d_forcing(self.path, self.forcing_type)
 
             self.dt = _calculate_dt(df, self.varnames["coords"][0])
             self.dx = _calculate_dx(df, self.varnames["coords"][1])
@@ -123,9 +121,9 @@ class TeseoCurrents:
     @property
     def load(self):
         if self.dx:
-            return read_2d_forcing(self.path, self.varnames[1:])
+            return read_2d_forcing(self.path, self.forcing_type)
         else:
-            return read_cte_forcing(self.path, self.varnames[3:])
+            return read_cte_forcing(self.path, self.forcing_type, self.dt)
 
 
 class TeseoWinds:
@@ -159,10 +157,10 @@ class TeseoWinds:
 
     @property
     def load(self):
-        if self.dx:
-            return read_2d_forcing(self.path, self.varnames[1:])
+        if self.dt_cte:
+            return read_2d_forcing(self.path, self.forcing_type)
         else:
-            return read_cte_forcing(self.path, self.varnames[3:])
+            return read_cte_forcing(self.path, self.forcing_type, self.dt_cte)
 
 
 class TeseoWaves:
@@ -196,10 +194,10 @@ class TeseoWaves:
 
     @property
     def load(self):
-        if self.dx:
-            return read_2d_forcing(self.path, self.varnames[1:])
+        if self.dt_cte:
+            return read_2d_forcing(self.path, self.forcing_type)
         else:
-            return read_cte_forcing(self.path, self.varnames[3:])
+            return read_cte_forcing(self.path, self.forcing_type, self.dt_cte)
 
 
 def _calculate_dx(df: pd.DataFrame, coordname: str):
