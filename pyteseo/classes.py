@@ -1,10 +1,16 @@
 from pathlib import Path, PosixPath, WindowsPath
+
 import numpy as np
 import pandas as pd
 
-from pyteseo.defaults import DEF_DIRS, DEF_FILES, DEF_VARS, DEF_COORDS
+from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES, DEF_VARS
+from pyteseo.io.domain import read_coastline, read_grid
 from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
-from pyteseo.io.domain import read_grid, read_coastline
+from pyteseo.io.results import (
+    read_grids_results,
+    read_particles_results,
+    read_properties_results,
+)
 
 
 class TeseoWrapper:
@@ -29,7 +35,7 @@ class TeseoWrapper:
         if Path(input_dir, DEF_FILES["grid"]).exists():
             self.grid = Grid(Path(input_dir, DEF_FILES["grid"]))
         else:
-            raise ValueError("No grid-file in the input directory")
+            raise FileNotFoundError("Grid-file is mandatory!")
 
         print("Loading coastline...")
         if Path(input_dir, DEF_FILES["coastline"]).exists():
@@ -44,6 +50,7 @@ class TeseoWrapper:
                 Path(input_dir, DEF_FILES["currents"]), currents_dt_cte
             )
         else:
+            print("No currents defined, creating null currents...")
             self.currents = None
             write_null_forcing(input_dir, forcing_type="currents")
 
@@ -51,6 +58,7 @@ class TeseoWrapper:
         if Path(input_dir, DEF_FILES["winds"]).exists():
             self.winds = Winds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
         else:
+            print("No winds defined, creating null winds...")
             self.winds = None
             write_null_forcing(input_dir, forcing_type="winds")
 
@@ -58,6 +66,7 @@ class TeseoWrapper:
         if Path(input_dir, DEF_FILES["waves"]).exists():
             self.waves = Waves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
         else:
+            print("No waves defined, creating null waves...")
             self.waves = None
             write_null_forcing(input_dir, forcing_type="waves")
 
@@ -68,19 +77,16 @@ class TeseoWrapper:
         pass
 
     @property
-    def particles():
-        pass
-        # return df
+    def load_particles(self):
+        read_particles_results(self.path)
 
     @property
-    def properties():
-        pass
-        # return df
+    def load_properties(self):
+        read_properties_results(self.path)
 
     @property
-    def grids():
-        pass
-        # return df
+    def load_grids(self):
+        read_grids_results(self.path)
 
 
 class Grid:
@@ -214,7 +220,6 @@ class Waves:
             self.nx = None
             self.ny = None
             self.nt = len(df)
-
         else:
             df = read_2d_forcing(self.path, self.forcing_type)
 

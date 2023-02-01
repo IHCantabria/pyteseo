@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 # FIXME - for new TESEO v2.0.0:
 # 1. format .csv for all the input
 # 2. domain_grid_path = /absolute_path/grid.csv                                         [lon, lat, depth]
@@ -14,6 +17,90 @@
 # processes [spreading[hours, type], ]
 # forcings [currents[nt, dt, nx*ny], winds[nt, dt, nx*ny], waves[nt, dt, nx*ny]]
 # simulation[type, dim, duration, dt]
+
+
+def set_time(initial_datetime: datetime, duration_h: float, dt_s: float):
+    return {
+        "initial_datetime": initial_datetime,
+        "durantion": duration_h,
+        "time_step": dt_s,
+    }
+
+
+def set_climate_vars(
+    air_temp: float, sea_temp: float, sea_dens: float, sea_c_visc: float
+):
+
+    return {
+        "air_temperature": air_temp,
+        "seawater_temperature": sea_temp,
+        "seawater_density": sea_dens,
+        "seawater_cinematic_viscosity": sea_c_visc,
+    }
+
+
+# instantaneous
+def set_instantaneous_release_config(n_spill_points: int):
+    return {"type": "instantaneous", "parameters": {"n_points": n_spill_points}}
+
+
+# continuous
+def set_continuous_release_config(
+    n_spill_points: int, release_duration_h: float, dt_s_subspill: float
+):
+
+    return {
+        "type": "continuous",
+        "parameters": {
+            "n_points": n_spill_points,
+            "release_duration": release_duration_h,
+            "dt_subspill": dt_s_subspill,
+        },
+    }
+
+
+def set_parameters(
+    dim: str, sim_type: str, realese_type: dict, backwards_flag: bool = False
+):
+    return {
+        "dimensional_space": dim,  # 2D, quasi-3D, 3D
+        "simulation_type": sim_type,  # drifter, oil, hns
+        "motion_backwards": backwards_flag,
+        "realese_type": realese_type,
+    }
+
+
+def set_spreading_config(type, duration_h):
+    return {
+        "type": type,
+        "spreading_duration": duration_h,
+    }
+
+
+def set_processes(
+    spreading_flag: bool,
+    spreading_config: dict,
+    evaporation_flag: bool,
+    emulsification_flag: bool,
+    vertical_dispersion_flag: bool,
+    disolution_flag: bool,
+    volatilization_flag: bool,
+    sedimentation_flag: bool,
+    biodegradation_flag: bool,
+):
+    return (
+        {
+            "spreading": spreading_flag,
+            "spreading_config": spreading_config,
+            "evaporation": evaporation_flag,
+            "emulsification": emulsification_flag,
+            "vertical_dispersion": vertical_dispersion_flag,
+            "disolution": disolution_flag,
+            "volatilization": volatilization_flag,
+            "sedimentation": sedimentation_flag,
+            "biodegradation": biodegradation_flag,
+        },
+    )
 
 
 def write_cfg(input_parameters, forcings_parameters, cfg_parameters, output_path):
@@ -144,15 +231,3 @@ def write_cfg(input_parameters, forcings_parameters, cfg_parameters, output_path
         f.write(cfg_txt)
 
     return output_path
-
-
-def write_run(dir_path):
-    print("doing something...")
-
-
-# def read_cfg(path):
-#     print("doing something...")
-
-
-# def read_run(path):
-#     print("doing something...")

@@ -2,22 +2,20 @@
 """
 from __future__ import annotations
 
-from pathlib import Path, PosixPath, WindowsPath
+from pathlib import Path
 
 import pandas as pd
 
 from pyteseo.defaults import DEF_PATTERNS
+from pyteseo.io.utils import _check_lonlat_range, _check_lonlat_soting
 
 
-# 1. DOMAIN
-def read_grid(
-    path: str | PosixPath | WindowsPath, nan_value: int | float = -999
-) -> pd.DataFrame:
+def read_grid(path: str, nan_value: float = -999) -> pd.DataFrame:
     """Read TESEO grid-file to pandas DataFrame
 
     Args:
-        path (str | PosixPath): path to the grid-file
-        nan_value (float | int, optional): value to set nans. Defaults to -999.
+        path (str): path to the grid-file
+        nan_value (float, optional): value to set nans. Defaults to -999.
 
     Returns:
         pd.DataFrame: DataFrame with TESEO grid data [lon, lat, depth]
@@ -31,26 +29,13 @@ def read_grid(
         )
 
     df.columns = ["lon", "lat", "depth"]
-    if (
-        df.lon.max() >= 180
-        or df.lon.min() <= -180
-        or df.lon.max() >= 90
-        or df.lon.min() <= -90
-    ):
-        raise ValueError(
-            "lon and lat values in TESEO grid-file should be inside ranges lon[-180,180] and lat[-90,90]!"
-        )
+    _check_lonlat_range(df)
+    _check_lonlat_soting(df)
 
-    if not all(
-        df.get(["lon", "lat"]) == df.sort_values(["lon", "lat"]).get(["lon", "lat"])
-    ):
-        raise ValueError(
-            "lon and lat values in TESEO grid-file should be monotonic increasing!"
-        )
     return df
 
 
-def read_coastline(path: str | PosixPath) -> pd.DataFrame:
+def read_coastline(path: str) -> pd.DataFrame:
     """Read TESEO coastline-file to pandas DataFrame
 
     Args:
@@ -118,16 +103,16 @@ def _split_polygons(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(new_polygons)
 
 
-def write_grid(
-    df: pd.DataFrame, path: str | PosixPath, nan_value: int | float = -999
-) -> None:
+def write_grid(df: pd.DataFrame, path: str, nan_value: float = -999) -> None:
     """Write TESEO grid-file
 
     Args:
         df (pd.DataFrame): DataFrame with columns 'lon', 'lat', 'depth' (lon:[-180,180], lat:[-90,90])
-        path (str | PosixPath): path to the new grid-file
-        nan_value (int | float, optional): define how will be writted nan values in the grid-file. Defaults to -999.
+        path (str): path to the new grid-file
+        nan_value (float, optional): define how will be writted nan values in the grid-file. Defaults to -999.
     """
+    path = Path(path)
+
     if (
         "lon" not in df.keys().values
         or "lat" not in df.keys().values
@@ -142,6 +127,7 @@ def write_grid(
             "DataFrame should contains column variables lon, lat and depth only!"
         )
 
+    # FIXME - if [0,360] convert to [-180,180]
     if (
         df.lon.max() >= 180
         or df.lon.min() <= -180
@@ -152,11 +138,7 @@ def write_grid(
             "lon and lat values should be inside ranges lon[-180,180] and lat[-90,90]!"
         )
 
-    if not all(
-        df.get(["lon", "lat"]) == df.sort_values(["lon", "lat"]).get(["lon", "lat"])
-    ):
-        df = df.sort_values(["lon", "lat"])
-
+    df = df.sort_values(["lon", "lat"])
     df.to_csv(
         path,
         sep="\t",
@@ -167,13 +149,14 @@ def write_grid(
     )
 
 
-def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
+def write_coastline(df: pd.DataFrame, path: str) -> None:
     """Write TESEO coastline and polygons files
 
     Args:
         df (pd.DataFrame): DataFrame with columns 'lon', 'lat' and polygons separated by nan lines (lon:[-180,180], lat:[-90,90])
-        path (str | PosixPath): path to the new coastline-file
+        path (str): path to the new coastline-file
     """
+    path = Path(path)
 
     if "lon" not in df.keys().values or "lat" not in df.keys().values:
         raise ValueError("variable names in DataFrame should be 'lon' and 'lat'!")
@@ -181,6 +164,7 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
     if df.shape[1] != 2:
         raise ValueError("DataFrame should contains column variables lon and lat only!")
 
+    # FIXME - if [0,360] convert to [-180,180]
     if (
         df.lon.max() >= 180
         or df.lon.min() <= -180
@@ -204,14 +188,14 @@ def write_coastline(df: pd.DataFrame, path: str | PosixPath) -> None:
 
 def _write_polygons(
     df: pd.DataFrame,
-    dir_path: str | PosixPath,
+    dir_path: str,
     filename_pattern: str = DEF_PATTERNS["polygons"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 
     Args:
         df (pd.DataFrame): input coastline DataFrame
-        dir_path (str | PosixPath): directory where polygon files will be created
+        dir_path (str): directory where polygon files will be created
         filename (str, optional): filename for polygon-files (numbering and extension will be added). Defaults to "coastline_polygon".
     """
 

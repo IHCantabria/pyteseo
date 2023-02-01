@@ -7,17 +7,16 @@ def _check_cte_dt(df):
         print(f"WARNING: Forcing time steps are not constant {dt}")
 
 
-def _check_lonlat_range(df, vars):
-    if "lon" in vars or "lat" in vars:
-        if (
-            df.lon.max() >= 180
-            or df.lon.min() <= -180
-            or df.lat.max() >= 90
-            or df.lat.min() <= -90
-        ):
-            print(
-                "WARNING: lon and lat values should be inside ranges lon[-180,180] and lat[-90,90]!"
-            )
+def _check_lonlat_range(df):
+    if (
+        df.lon.max() >= 180
+        or df.lon.min() <= -180
+        or df.lat.max() >= 90
+        or df.lat.min() <= -90
+    ):
+        print(
+            "WARNING: lon and lat values should be inside ranges lon[-180,180] and lat[-90,90]!"
+        )
 
 
 def _check_lonlat_soting(df):

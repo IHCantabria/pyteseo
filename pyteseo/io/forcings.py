@@ -57,7 +57,7 @@ def read_2d_forcing(path: str, forcing_type: str) -> pd.DataFrame:
         df = pd.read_csv(file, delimiter="\s+", header=None)
         _check_n_vars(df, file_column_names)
         df.columns = file_column_names
-        _check_lonlat_range(df, file_column_names)
+        _check_lonlat_range(df)
         _check_lonlat_soting(df)
 
         df.insert(loc=0, column="time", value=float(file.stem[-4:-1]))
@@ -118,7 +118,7 @@ def write_2d_foring(
     df = df.sort_values(coordnames)
 
     _check_varnames(df, varnames + coordnames)
-    _check_lonlat_range(df, coordnames)
+    _check_lonlat_range(df)
     _check_cte_dt(df)
 
     grouped = df.groupby(coordnames[0])

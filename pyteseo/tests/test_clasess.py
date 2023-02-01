@@ -31,13 +31,50 @@ def setup_teardown():
     "input_files, input_files_dst, error",
     [
         (
-            ["grid.dat", "lstcurr_UVW_cte.pre", "lstwinds_cte.pre"],
-            ["grid.dat", "lstcurr_UVW.pre", "lstwinds.pre"],
+            [
+                "grid.dat",
+                "coastline.dat",
+                "lstcurr_UVW_cte.pre",
+                "lstwinds_cte.pre",
+                "lstwaves_cte.pre",
+            ],
+            [
+                "grid.dat",
+                "coastline.dat",
+                "lstcurr_UVW.pre",
+                "lstwinds.pre",
+                "lstwaves.pre",
+            ],
             None,
         ),
         (
-            ["lstcurr_UVW_cte.pre", "lstwinds_cte.pre"],
-            ["lstcurr_UVW.pre", "lstwinds.pre"],
+            ["grid.dat", "coastline.dat", "lstcurr_UVW_cte.pre", "lstwinds_cte.pre"],
+            ["grid.dat", "coastline.dat", "lstcurr_UVW.pre", "lstwinds.pre"],
+            None,
+        ),
+        (
+            ["grid.dat", "coastline.dat", "lstcurr_UVW_cte.pre"],
+            ["grid.dat", "coastline.dat", "lstcurr_UVW.pre"],
+            None,
+        ),
+        (
+            ["grid.dat", "coastline.dat", "lstwinds_cte.pre"],
+            ["grid.dat", "coastline.dat", "lstwinds.pre"],
+            None,
+        ),
+        # (
+        #     ["grid.dat", "coastline.dat"],
+        #     ["grid.dat", "coastline.dat"],
+        #     "no_forcing",
+        # ),
+        (
+            [
+                "coastline.dat",
+                "lstcurr_UVW_cte.pre",
+                "lstwinds_cte.pre",
+                "lstwaves_cte.pre",
+            ],
+            ["lstcurr_UVW.pre", "lstwinds.pre", "lstwaves.pre"],
             "no_grid",
         ),
     ],
@@ -54,7 +91,7 @@ def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
     assert Path(job.input_dir).exists()
 
     if error:
-        with pytest.raises(ValueError):
+        with pytest.raises(FileNotFoundError):
             job.load_inputs()
     else:
         job.load_inputs()

@@ -28,7 +28,7 @@ def setup_teardown():
 def test_read_particles_results(error):
 
     if error == "no_match":
-        with pytest.raises(ValueError):
+        with pytest.raises(FileNotFoundError):
             df = read_particles_results(dir_path="data_path")
 
     df = read_particles_results(dir_path=data_path)
@@ -38,7 +38,7 @@ def test_read_particles_results(error):
 @pytest.mark.parametrize("error", [(None), ("no_match")])
 def test_read_properties_results(error):
     if error == "no_match":
-        with pytest.raises(ValueError):
+        with pytest.raises(FileNotFoundError):
             df = read_properties_results(dir_path="data_path")
 
     df = read_properties_results(dir_path=data_path)
@@ -48,7 +48,7 @@ def test_read_properties_results(error):
 @pytest.mark.parametrize("error", [(None), ("no_match")])
 def test_read_grids_results(error):
     if error == "no_match":
-        with pytest.raises(ValueError):
+        with pytest.raises(FileNotFoundError):
             df = read_grids_results(dir_path="data_path")
 
     df = read_grids_results(dir_path=data_path)

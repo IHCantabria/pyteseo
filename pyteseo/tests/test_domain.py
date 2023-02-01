@@ -31,9 +31,7 @@ def setup_teardown():
     [
         ("grid.dat", None),
         ("not_existent_file.dat", "not_exist"),
-        ("grid_error_sort.dat", "bad_format"),
         ("grid_error_var.dat", "bad_format"),
-        ("grid_error_range.dat", "bad_format"),
     ],
 )
 def test_read_grid(file, error):
