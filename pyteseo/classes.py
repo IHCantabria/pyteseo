@@ -4,7 +4,7 @@ import pandas as pd
 
 from pyteseo.defaults import DEF_DIRS, DEF_FILES, DEF_VARS, DEF_COORDS
 from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
-from pyteseo.io.domain import read_grid
+from pyteseo.io.domain import read_grid, read_coastline
 
 
 class TeseoWrapper:
@@ -25,11 +25,20 @@ class TeseoWrapper:
 
         input_dir = Path(self.input_dir).resolve()
 
+        print("Loading grid...")
         if Path(input_dir, DEF_FILES["grid"]).exists():
             self.grid = TeseoGrid(Path(input_dir, DEF_FILES["grid"]))
         else:
             raise ValueError("No grid-file in the input directory")
 
+        print("Loading coastline...")
+        if Path(input_dir, DEF_FILES["coastline"]).exists():
+            self.path = Path(input_dir, DEF_FILES["coastline"])
+            # TODO - Create Coastline object
+        else:
+            print("No coastline defined!")
+
+        print("Loading currents...")
         if Path(input_dir, DEF_FILES["currents"]).exists():
             self.currents = TeseoCurrents(
                 Path(input_dir, DEF_FILES["currents"]), currents_dt_cte
@@ -38,12 +47,14 @@ class TeseoWrapper:
             self.currents = None
             write_null_forcing(input_dir, forcing_type="currents")
 
+        print("Loading winds...")
         if Path(input_dir, DEF_FILES["winds"]).exists():
             self.winds = TeseoWinds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
         else:
             self.winds = None
             write_null_forcing(input_dir, forcing_type="winds")
 
+        print("Loading waves...")
         if Path(input_dir, DEF_FILES["waves"]).exists():
             self.waves = TeseoWaves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
         else:
@@ -73,15 +84,50 @@ class TeseoWrapper:
 
 
 class TeseoGrid:
-    def __init__(self, path: str | PosixPath | WindowsPath):
-
-        self.type = "domain_grid"
+    def __init__(self, path: str):
         self.path = str(Path(path).resolve())
         df = read_grid(self.path)
+        self.calculate_variables(df)
+
+    def calculate_variables(self, df):
         self.dx = _calculate_dx(df, DEF_COORDS["x"])
         self.dy = _calculate_dy(df, DEF_COORDS["y"])
         self.nx = _calculate_nx(df, DEF_COORDS["x"])
         self.ny = _calculate_ny(df, DEF_COORDS["y"])
+        self.x_min = df[DEF_COORDS["x"]].min()
+        self.x_max = df[DEF_COORDS["x"]].max()
+        self.y_min = df[DEF_COORDS["y"]].min()
+        self.y_max = df[DEF_COORDS["y"]].max()
+
+    def __repr__(self) -> str:
+        return f"path: '{self.path}'\n dx: {self.dx}\n dy: {self.dy}\n nx: {self.nx}\n ny: {self.ny}\n x_min: {self.x_min}\n x_max: {self.x_max}\n y_min: {self.y_min}\n y_max: {self.y_max}\n"
+
+    def __str__(self) -> str:
+        return f"path: '{self.path}'\n dx: {self.dx}\n dy: {self.dy}\n nx: {self.nx}\n ny: {self.ny}\n x_min: {self.x_min}\n x_max: {self.x_max}\n y_min: {self.y_min}\n y_max: {self.y_max}\n"
+
+    @property
+    def load(self):
+        return read_grid(self.path)
+
+
+class TeseoCoastline:
+    def __init__(self, path: str):
+        self.path = str(Path(path).resolve())
+        df = read_coastline(self.path)
+        self.calculate_variables(df)
+
+    def calculate_variables(self, df):
+        self.x_min = df[DEF_COORDS["x"]].min()
+        self.x_max = df[DEF_COORDS["x"]].max()
+        self.y_min = df[DEF_COORDS["y"]].min()
+        self.y_max = df[DEF_COORDS["y"]].max()
+        self.n_polygons = len(df.index.get_level_values("polygon").unique())
+
+    def __repr__(self) -> str:
+        return f"path: '{self.path}'\n n_polygons: {self.n_polygons}\n x_min: {self.x_min}\n x_max: {self.x_max}\n y_min: {self.y_min}\n y_max: {self.y_max}\n"
+
+    def __str__(self) -> str:
+        return f"path: '{self.path}'\n n_polygons: {self.n_polygons}\n x_min: {self.x_min}\n x_max: {self.x_max}\n y_min: {self.y_min}\n y_max: {self.y_max}\n"
 
     @property
     def load(self):

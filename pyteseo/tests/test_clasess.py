@@ -10,6 +10,7 @@ from pyteseo.classes import (
     TeseoWaves,
     TeseoWinds,
     TeseoWrapper,
+    TeseoCoastline,
 )
 from pyteseo.defaults import DEF_FILES
 
@@ -81,6 +82,22 @@ def test_TeseoGrid(path, error):
         assert grid.dy == pytest.approx(0.00050, abs=0.00001)
         assert grid.nx == 238
         assert grid.ny == 267
+
+
+@pytest.mark.parametrize(
+    "path, error",
+    [
+        (Path(data_path, "coastline.dat"), None),
+        (Path(data_path, "not_exist.file"), "not_exist"),
+    ],
+)
+def test_TeseoCoastline(path, error):
+    if error == "not_exist":
+        with pytest.raises(FileNotFoundError):
+            coastline = TeseoCoastline(path)
+    else:
+        coastline = TeseoCoastline(path)
+        assert isinstance(coastline.path, str)
 
 
 @pytest.mark.parametrize(
