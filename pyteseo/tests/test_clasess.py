@@ -5,12 +5,12 @@ import pytest
 
 from pyteseo.__init__ import __version__ as v
 from pyteseo.classes import (
-    TeseoCurrents,
-    TeseoGrid,
-    TeseoWaves,
-    TeseoWinds,
+    Currents,
+    Grid,
+    Waves,
+    Winds,
     TeseoWrapper,
-    TeseoCoastline,
+    Coastline,
 )
 from pyteseo.defaults import DEF_FILES
 
@@ -74,9 +74,9 @@ def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
 def test_TeseoGrid(path, error):
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            grid = TeseoGrid(path)
+            grid = Grid(path)
     else:
-        grid = TeseoGrid(path)
+        grid = Grid(path)
         assert isinstance(grid.path, str)
         assert grid.dx == pytest.approx(0.00050, abs=0.00001)
         assert grid.dy == pytest.approx(0.00050, abs=0.00001)
@@ -94,9 +94,9 @@ def test_TeseoGrid(path, error):
 def test_TeseoCoastline(path, error):
     if error == "not_exist":
         with pytest.raises(FileNotFoundError):
-            coastline = TeseoCoastline(path)
+            coastline = Coastline(path)
     else:
-        coastline = TeseoCoastline(path)
+        coastline = Coastline(path)
         assert isinstance(coastline.path, str)
 
 
@@ -109,7 +109,7 @@ def test_TeseoCoastline(path, error):
 )
 def test_TeseoCurrents(path, dt_cte):
 
-    currents = TeseoCurrents(path, dt_cte)
+    currents = Currents(path, dt_cte)
     assert isinstance(currents.path, str)
     assert currents.dt == 1
     assert currents.nt == 4
@@ -134,7 +134,7 @@ def test_TeseoCurrents(path, dt_cte):
 )
 def test_TeseoWinds(path, dt_cte):
 
-    winds = TeseoWinds(path, dt_cte)
+    winds = Winds(path, dt_cte)
     assert isinstance(winds.path, str)
     assert winds.dt == 1
     assert winds.nt == 4
@@ -159,7 +159,7 @@ def test_TeseoWinds(path, dt_cte):
 )
 def test_TeseoWaves(path, dt_cte):
 
-    winds = TeseoWaves(path, dt_cte)
+    winds = Waves(path, dt_cte)
     assert isinstance(winds.path, str)
     assert winds.dt == 1
     assert winds.nt == 4

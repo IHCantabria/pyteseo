@@ -27,7 +27,7 @@ class TeseoWrapper:
 
         print("Loading grid...")
         if Path(input_dir, DEF_FILES["grid"]).exists():
-            self.grid = TeseoGrid(Path(input_dir, DEF_FILES["grid"]))
+            self.grid = Grid(Path(input_dir, DEF_FILES["grid"]))
         else:
             raise ValueError("No grid-file in the input directory")
 
@@ -40,7 +40,7 @@ class TeseoWrapper:
 
         print("Loading currents...")
         if Path(input_dir, DEF_FILES["currents"]).exists():
-            self.currents = TeseoCurrents(
+            self.currents = Currents(
                 Path(input_dir, DEF_FILES["currents"]), currents_dt_cte
             )
         else:
@@ -49,14 +49,14 @@ class TeseoWrapper:
 
         print("Loading winds...")
         if Path(input_dir, DEF_FILES["winds"]).exists():
-            self.winds = TeseoWinds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
+            self.winds = Winds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
         else:
             self.winds = None
             write_null_forcing(input_dir, forcing_type="winds")
 
         print("Loading waves...")
         if Path(input_dir, DEF_FILES["waves"]).exists():
-            self.waves = TeseoWaves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
+            self.waves = Waves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
         else:
             self.waves = None
             write_null_forcing(input_dir, forcing_type="waves")
@@ -83,7 +83,7 @@ class TeseoWrapper:
         # return df
 
 
-class TeseoGrid:
+class Grid:
     def __init__(self, path: str):
         self.path = str(Path(path).resolve())
         df = read_grid(self.path)
@@ -110,7 +110,7 @@ class TeseoGrid:
         return read_grid(self.path)
 
 
-class TeseoCoastline:
+class Coastline:
     def __init__(self, path: str):
         self.path = str(Path(path).resolve())
         df = read_coastline(self.path)
@@ -134,7 +134,7 @@ class TeseoCoastline:
         return read_grid(self.path)
 
 
-class TeseoCurrents:
+class Currents:
     def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "currents"
         self.varnames = DEF_VARS[self.forcing_type]
@@ -167,7 +167,7 @@ class TeseoCurrents:
             return read_cte_forcing(self.path, self.forcing_type, self.dt)
 
 
-class TeseoWinds:
+class Winds:
     def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "winds"
         self.varnames = DEF_VARS[self.forcing_type]
@@ -200,7 +200,7 @@ class TeseoWinds:
             return read_cte_forcing(self.path, self.forcing_type, self.dt)
 
 
-class TeseoWaves:
+class Waves:
     def __init__(self, lst_path: str | PosixPath | WindowsPath, dt_cte: float = 1.0):
         self.forcing_type = "waves"
         self.varnames = DEF_VARS[self.forcing_type]
