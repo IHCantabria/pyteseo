@@ -1,5 +1,7 @@
 import numpy as np
 
+from pyteseo.defaults import DEF_COORDS
+
 
 def _check_cte_dt(df):
     dt = np.unique(np.diff(df["time"].unique()))
@@ -20,10 +22,10 @@ def _check_lonlat_range(df):
 
 
 def _check_lonlat_soting(df):
-    if not df["lon"].is_monotonic_increasing:
-        print("WARNING: lon values should be monotonic increasing!")
-    if not df["lat"].is_monotonic_increasing:
-        print("WARNING: lon values should be monotonic increasing!")
+    if not df[DEF_COORDS["x"]].drop_duplicates().is_monotonic_increasing:
+        print(f"WARNING: '{DEF_COORDS['x']}' values should be monotonic increasing!")
+    if not df[DEF_COORDS["y"]].drop_duplicates().is_monotonic_increasing:
+        print(f"WARNING: '{DEF_COORDS['y']}' values should be monotonic increasing!")
 
 
 def _check_varnames(df, vars):

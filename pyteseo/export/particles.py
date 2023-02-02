@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path, PosixPath, WindowsPath
+from pathlib import Path
 from geojson import Feature, FeatureCollection, MultiPoint, dump
 from datetime import datetime, timedelta
 import pandas as pd
@@ -14,19 +14,19 @@ from pyteseo.defaults import DEF_PATTERNS
 def export_particles(
     df: pd.DataFrame,
     file_format: str,
-    output_dir: str | PosixPath | WindowsPath = "./",
+    output_dir: str = ".",
     ref_datetime: datetime = None,
-) -> list[PosixPath]:
+) -> list:
     """Export TESEO's particles (by spill_id) to CSV, JSON, or GEOJSON.
 
     Args:
-        df (pd.DataFrame): Particles data obtained with pyteseo.io.read_particles_results.
-        file_format (str): csv, json, or geojson.
-        output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
-        ref_datetime (datetime): Reference datetime of the results. Defaults to None.
+        df (pd.DataFrame): Particles data obtained with pyteseo.io.read_particles_results
+        file_format (str): csv, json, or geojson
+        output_dir (str, optional): directory to export the files. Defaults to "."
+        ref_datetime (datetime): Reference datetime of the results. Defaults to None
 
     Returns:
-        list[PosixPath]: paths to exported files.
+        list: paths to exported files.
     """
 
     allowed_formats = ["csv", "json", "geojson"]
@@ -66,14 +66,14 @@ def export_particles(
 
 def _df_particles_to_geojson(
     df: pd.DataFrame,
-    output_path: str | PosixPath | WindowsPath,
+    output_path: str,
     ref_datetime: datetime,
 ) -> None:
     """Convert particles DataFrame to geojson using geojson library.
 
     Args:
         df (pd.DataFrame): Particles data readed with pyteseo.io.read_particles_results
-        output_path (str | PosixPath | WindowsPath): path to create the exported file.
+        output_dir (str): directory to export the files
         ref_datetime (datetime, optional): Reference time of the results.
     """
 

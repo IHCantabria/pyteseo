@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path, PosixPath, WindowsPath
+from pathlib import Path
 import pandas as pd
 
 from pyteseo.defaults import DEF_COORDS, DEF_PATTERNS
@@ -11,18 +11,18 @@ from pyteseo.defaults import DEF_COORDS, DEF_PATTERNS
 
 def export_grids(
     df: pd.DataFrame,
-    file_format: list[str],
-    output_dir: str | PosixPath | WindowsPath = "./",
-) -> list[PosixPath]:
-    """Export TESEO's grids (by spill_id) to CSV, JSON, or NETCDF.
+    file_format: list,
+    output_dir: str = ".",
+) -> list:
+    """Export TESEO's grids (by spill_id) to CSV, JSON, or NETCDF
 
     Args:
-        df (pd.DataFrame): Grids data obtained with pyteseo.io.read_grids_results.
-        file_format (list[str]): csv, json, or nc.
-        output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
+        df (pd.DataFrame): Grids data obtained with pyteseo.io.read_grids_results
+        file_format (list): csv, json, or nc
+        output_dir (str, optional): directory to export the files. Defaults to "."
 
     Returns:
-        list[PosixPath]: paths to exported files.
+        list: paths to exported files
     """
 
     allowed_formats = ["csv", "json", "nc"]

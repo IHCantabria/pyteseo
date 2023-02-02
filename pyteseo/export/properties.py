@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path, PosixPath, WindowsPath
+from pathlib import Path
 import pandas as pd
 
 from pyteseo.defaults import DEF_PATTERNS
@@ -11,18 +11,18 @@ from pyteseo.defaults import DEF_PATTERNS
 
 def export_properties(
     df: pd.DataFrame,
-    file_format: list[str],
-    output_dir: str | PosixPath | WindowsPath = "./",
-) -> list[PosixPath]:
+    file_format: list,
+    output_dir: str = ".",
+) -> list:
     """Export TESEO's properties (by spill_id) to CSV, or JSON.
 
     Args:
         df (pd.DataFrame): Properties data obtained with pyteseo.io.read_properties_results.
-        file_format (list[str]): csv, or json.
-        output_dir (str | PosixPath | WindowsPath, optional): directory to export the files. Defaults to "./"
+        file_format (list): csv, or json.
+        output_dir (str, optional): directory to export the files. Defaults to "."
 
     Returns:
-        list[PosixPath]: paths to exported files.
+        list: paths to exported files.
     """
 
     allowed_formats = ["csv", "json"]
