@@ -2,12 +2,14 @@
 
 ## v0.0.6 - ??/??/2023
 ### Added:
-1) Objects for forcings and simulation(job)
+1) Classes for forcings
 2) Create null forcings
+3) Create TeseoWrapper class
 ### Changed:
 1) modules are getting too big, I split structure into subpackages
+2) generalize i/o of forcings to spatially cte or 2d
 ### Fixed:
-1) notebooks work
+1) notebooks
 <br/><br/>
 
 
