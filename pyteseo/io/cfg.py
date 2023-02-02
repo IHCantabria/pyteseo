@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # FIXME - for new TESEO v2.0.0:
@@ -19,18 +19,43 @@ from datetime import datetime
 # simulation[type, dim, duration, dt]
 
 
-def set_time(initial_datetime: datetime, duration_h: float, dt_s: float):
+def set_time(
+    initial_datetime: datetime, duration: timedelta, timestep: timedelta
+) -> dict:
+    """set simulation time options
+
+    Args:
+        initial_datetime (datetime): datetime of the simulation initiation
+        duration (timedelta): duration of the simulation
+        timestep (timedelta): timestep of the simulation
+
+    Returns:
+        dict: time configurations
+    """
     return {
-        "initial_datetime": initial_datetime,
-        "durantion": duration_h,
-        "time_step": dt_s,
+        "initial_datetime": initial_datetime.isoformat(),
+        "duration": duration.total_seconds() / 3600,
+        "timestep": timestep.total_seconds(),
     }
 
 
 def set_climate_vars(
-    air_temp: float, sea_temp: float, sea_dens: float, sea_c_visc: float
+    air_temp: float = 14,
+    sea_temp: float = 20,
+    sea_dens: float = 1025,
+    sea_c_visc: float = 1.004e-6,
 ):
+    """set simulation climate variables
 
+    Args:
+        air_temp (float, optional): air temperature, ºC. Defaults to 14.
+        sea_temp (float, optional): seawater surface temperature, ºC. Defaults to 20.
+        sea_dens (float, optional): seawater density, kg/m3. Defaults to 1025.
+        sea_c_visc (float, optional): seawater cinematic viscosity, m2/s. Defaults to 1.004e-6.
+
+    Returns:
+        _type_: _description_
+    """
     return {
         "air_temperature": air_temp,
         "seawater_temperature": sea_temp,
@@ -40,33 +65,61 @@ def set_climate_vars(
 
 
 # instantaneous
-def set_instantaneous_release_config(n_spill_points: int):
-    return {"type": "instantaneous", "parameters": {"n_points": n_spill_points}}
+def set_instantaneous_release(n_points: int) -> dict:
+    """set instantaneous release configuration
+
+    Args:
+        n_points (int): number of spill points
+
+    Returns:
+        dict: release configuration
+    """
+    return {"type": "instantaneous", "parameters": {"n_points": n_points}}
 
 
 # continuous
-def set_continuous_release_config(
-    n_spill_points: int, release_duration_h: float, dt_s_subspill: float
-):
+def set_continuous_release(
+    n_points: int, release_duration: timedelta, subspill_timestep: timedelta
+) -> dict:
+    """set continuous release configuration
 
+    Args:
+        n_points (int): number of spill points
+        release_duration (timedelta): duration of the release
+        subspill_timestep (timedelta): timestep between subspills
+
+    Returns:
+        dict: release onfiguration
+    """
     return {
         "type": "continuous",
         "parameters": {
-            "n_points": n_spill_points,
-            "release_duration": release_duration_h,
-            "dt_subspill": dt_s_subspill,
+            "n_points": n_points,
+            "release_duration": release_duration.total_seconds() / 3600,
+            "subspill_timestep": subspill_timestep.total_seconds(),
         },
     }
 
 
-def set_parameters(
-    dim: str, sim_type: str, realese_type: dict, backwards_flag: bool = False
-):
+def set_simulation_parameters(
+    simulation_type: str = "2d",
+    motion_type: str = "forwards",
+    weathering_type: str = "drifter",
+) -> dict:
+    """set simulation parameters
+
+    Args:
+        simulation_type (str): "2d", "quasi3d", "3d". Defaults to "2d".
+        weathering_type (str): "drifter", "oil", "hns". Defaults to "drifter".
+        motion (str, optional): "forwards" or "backwards". Defaults to "forwards".
+
+    Returns:
+        dict: simulation parameters
+    """
     return {
-        "dimensional_space": dim,  # 2D, quasi-3D, 3D
-        "simulation_type": sim_type,  # drifter, oil, hns
-        "motion_backwards": backwards_flag,
-        "realese_type": realese_type,
+        "simulation_type": simulation_type,
+        "motion_type": motion_type,
+        "weathering_type": weathering_type,
     }
 
 
@@ -101,6 +154,12 @@ def set_processes(
             "biodegradation": biodegradation_flag,
         },
     )
+
+
+spill_table = []
+
+
+hns_table = []
 
 
 def write_cfg(input_parameters, forcings_parameters, cfg_parameters, output_path):
