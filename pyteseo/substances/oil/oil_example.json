@@ -1,0 +1,17 @@
+{
+    "cas_number": "8008-20-6",
+    "density": 816,
+    "density_temperature": 20,
+    "density_units": "kg/m3",
+    "emulsification_max": 0,
+    "evaporation_max": 12,
+    "evaporation_min": 0,
+    "formula": null,
+    "id": 1,
+    "name": "oil_example",
+    "oil_type": "refined",
+    "physical_state": "liquid",
+    "viscosity": 1.5,
+    "viscosity_temperature": 38,
+    "viscosity_units": "cst"
+}
