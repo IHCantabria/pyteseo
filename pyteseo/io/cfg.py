@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import pandas as pd
 
 
 # FIXME - for new TESEO v2.0.0:
@@ -48,10 +49,10 @@ def set_climate_vars(
     """set simulation climate variables
 
     Args:
-        air_temp (float, optional): air temperature, ºC. Defaults to 14.
-        sea_temp (float, optional): seawater surface temperature, ºC. Defaults to 20.
-        sea_dens (float, optional): seawater density, kg/m3. Defaults to 1025.
-        sea_c_visc (float, optional): seawater cinematic viscosity, m2/s. Defaults to 1.004e-6.
+        air_temp (float, optional): air temperature, (ºC). Defaults to 14.
+        sea_temp (float, optional): seawater surface temperature, (ºC). Defaults to 20.
+        sea_dens (float, optional): seawater density, (kg/m3). Defaults to 1025.
+        sea_c_visc (float, optional): seawater cinematic viscosity, (m2/s). Defaults to 1.004e-6.
 
     Returns:
         _type_: _description_
@@ -116,6 +117,25 @@ def set_simulation_parameters(
     Returns:
         dict: simulation parameters
     """
+    simulation_types = ["2d", "quasi3d", "3d"]
+    weathering_types = ["drifter", "oil", "hns"]
+    motion_types = ["forwards", "backwards"]
+
+    if simulation_type.lower() not in simulation_types:
+        raise ValueError(
+            f"Invalid keyword ({simulation_type.lower()}), use one of these {simulation_types}"
+        )
+
+    if weathering_type.lower() not in weathering_types:
+        raise ValueError(
+            f"Invalid keyword ({weathering_type.lower()}), use one of these {weathering_types}"
+        )
+
+    if motion_type.lower() not in motion_types:
+        raise ValueError(
+            f"Invalid keyword ({motion_type.lower()}), use one of these {motion_types}"
+        )
+
     return {
         "simulation_type": simulation_type,
         "motion_type": motion_type,
@@ -123,43 +143,198 @@ def set_simulation_parameters(
     }
 
 
-def set_spreading_config(type, duration_h):
+def set_spreading_config(spreading_type: str, duration: timedelta) -> dict:
+    """set spreading configuration
+
+    Args:
+        spreading_type (str): "adios2", "lehr", "mohid-hns". (ref: TODO - papers)
+        duration (timedelta): spreading duration for "adios2" and "lehr".
+
+    Returns:
+        dict: spreading configuration
+    """
+    valid_keywords = ["adios2", "lehr", "mohid-hns"]
+    if spreading_type.lower() not in valid_keywords:
+        raise ValueError(
+            f"Invalid keyword ({spreading_type.lower()}), use one of these {valid_keywords}"
+        )
     return {
-        "type": type,
-        "spreading_duration": duration_h,
+        "spreading_type": spreading_type,
+        "spreading_duration": duration.total_seconds() / 3600,
     }
 
 
 def set_processes(
-    spreading_flag: bool,
-    spreading_config: dict,
-    evaporation_flag: bool,
-    emulsification_flag: bool,
-    vertical_dispersion_flag: bool,
-    disolution_flag: bool,
-    volatilization_flag: bool,
-    sedimentation_flag: bool,
-    biodegradation_flag: bool,
-):
-    return (
-        {
-            "spreading": spreading_flag,
-            "spreading_config": spreading_config,
-            "evaporation": evaporation_flag,
-            "emulsification": emulsification_flag,
-            "vertical_dispersion": vertical_dispersion_flag,
-            "disolution": disolution_flag,
-            "volatilization": volatilization_flag,
-            "sedimentation": sedimentation_flag,
-            "biodegradation": biodegradation_flag,
-        },
+    spreading: bool,
+    evaporation: bool,
+    emulsification: bool,
+    vertical_dispersion: bool,
+    disolution: bool,
+    volatilization: bool,
+    sedimentation: bool,
+    biodegradation: bool,
+) -> dict:
+    """set flags to activate or not each process
+
+    Args:
+        spreading (bool): activate spreading (oil/hns)
+        evaporation (bool): activate evaporation (oil/hns)
+        emulsification (bool): activate emulsion (oil)
+        vertical_dispersion (bool): activate vertical dispersion (oil/hns)
+        disolution (bool): activate disolution (hns)
+        volatilization (bool): activate volatilization (hns)
+        sedimentation (bool): activate sedimentation (hns)
+        biodegradation (bool): activate biodegradation (hns)
+
+    Returns:
+        dict: flags for activate processes
+    """
+    return {
+        "spreading": spreading,
+        "evaporation": evaporation,
+        "emulsification": emulsification,
+        "vertical_dispersion": vertical_dispersion,
+        "disolution": disolution,
+        "volatilization": volatilization,
+        "sedimentation": sedimentation,
+        "biodegradation": biodegradation,
+    }
+
+
+def set_hns_table(
+    n_spill_points: int,
+    suspended_solids: list[float] = [10],
+    sorption_coeficient: list[float] = [-0.32],
+    degradation_rate: list[float] = [0],
+) -> str:
+    """set hns table
+
+    Args:
+        n_spill_points (int): number of spill points
+        suspended_solids (list[float], optional): concentration of suspended solids, [mg/L]. Defaults to [10].
+        sorption_coeficient (list[float], optional): sorption coeficient of the sustance, [-]. Defaults to [-0.32].
+        degradation_rate (list[float], optional): degradation rate, [day-1]. Defaults to [0].
+
+    Returns:
+        str: hns table
+    """
+    suspended_solids = (
+        [suspended_solids]
+        if not isinstance(suspended_solids, list)
+        else suspended_solids
+    )
+    sorption_coeficient = (
+        [sorption_coeficient]
+        if not isinstance(sorption_coeficient, list)
+        else sorption_coeficient
+    )
+    degradation_rate = (
+        [degradation_rate]
+        if not isinstance(degradation_rate, list)
+        else degradation_rate
     )
 
+    suspended_solids = (
+        suspended_solids * n_spill_points
+        if len(suspended_solids) == 1
+        else suspended_solids
+    )
+    sorption_coeficient = (
+        sorption_coeficient * n_spill_points
+        if len(sorption_coeficient) == 1
+        else sorption_coeficient
+    )
+    degradation_rate = (
+        degradation_rate * n_spill_points
+        if len(degradation_rate) == 1
+        else degradation_rate
+    )
 
-spill_table = []
+    df = pd.DataFrame(
+        {
+            "suspended_solids": suspended_solids,
+            "sorption_coeficient": sorption_coeficient,
+            "degradation_rate": degradation_rate,
+        }
+    )
+    df.index = df.index + 1
+    return df.to_string(header=False)
 
 
-hns_table = []
+def set_spill_points_cfg(
+    n_spill_points: int,
+    release_time: list[timedelta],
+    lon: list[float],
+    lat: list[float],
+    depth: list[float] = [0],
+    width: list[float] = [1],
+    length: list[float] = [1],
+    mass: list[float] = [0],
+    volume: list[float] = [0],
+    thickness: list[float] = [0],
+) -> pd.DataFrame:
+    """create intermediate DataFrame with general spill point cfg
+
+    Args:
+        release_time (list[timedelta]): increment of time to initiate the release relative to the initiation of the simulation
+        lon (list[float]): X-coordinate of the spill point, (º).
+        lat (list[float]): Y-coordinate of the spill point, (º).
+        depth (list[float], optional): Z-coordinate of the spill point, (m). Defaults to 0.
+        width (list[float], optional): width of the spill in X-axis, (m). Defaults to 1.
+        length (list[float], optional): length of the spill in Y-axis, (m). Defaults to 1.
+        mass (list[float], optional): total mass spilled, (kg). Defaults to 0.
+        volume (list[float], optional): total volume spilled, (m3). Defaults to 0.
+        thickness (list[float], optional): thickness of the initial spill, (m). Defaults to 0.
+
+    Returns:
+        pd.DataFrame: spill point configuration
+    """
+    release_time = (
+        [release_time] if not isinstance(release_time, list) else release_time
+    )
+    lon = [lon] if not isinstance(lon, list) else lon
+    lat = [lat] if not isinstance(lat, list) else lat
+    depth = [depth] if not isinstance(depth, list) else depth
+    width = [width] if not isinstance(width, list) else width
+    length = [length] if not isinstance(length, list) else length
+    mass = [mass] if not isinstance(mass, list) else mass
+    volume = [volume] if not isinstance(volume, list) else volume
+    thickness = [thickness] if not isinstance(thickness, list) else thickness
+
+    release_time = (
+        release_time * n_spill_points if len(release_time) == 1 else release_time
+    )
+    lon = lon * n_spill_points if len(lon) == 1 else lon
+    lat = lat * n_spill_points if len(lat) == 1 else lat
+    depth = depth * n_spill_points if len(depth) == 1 else depth
+    width = width * n_spill_points if len(width) == 1 else width
+    length = length * n_spill_points if len(length) == 1 else length
+    mass = mass * n_spill_points if len(mass) == 1 else mass
+    volume = volume * n_spill_points if len(volume) == 1 else volume
+    thickness = thickness * n_spill_points if len(thickness) == 1 else thickness
+
+    df = pd.DataFrame(
+        {
+            "release_time": [dt.total_seconds() / 3600 for dt in release_time],
+            "lon": lon,
+            "lat": lat,
+            "depth": depth,
+            "widht": width,
+            "lenght": length,
+            "thickness": thickness,
+            "mass": mass,
+            "volume": volume,
+        }
+    )
+    if len(df) != n_spill_points:
+        raise ValueError(
+            f"The number of spill points ({n_spill_points}) is not equal to the number of inputs provided"
+        )
+    return df
+
+
+def set_substance_cfg() -> pd.DataFrame:
+    pass
 
 
 def write_cfg(input_parameters, forcings_parameters, cfg_parameters, output_path):

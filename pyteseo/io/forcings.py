@@ -36,7 +36,7 @@ def read_cte_forcing(path: str, forcing_type: str, dt: float) -> pd.DataFrame:
 
     df.insert(0, "time", df.index.values * dt)
 
-    # FIXME
+    # FIXME - Use always UV
     if forcing_type in ["currents", "winds"]:
         df = df.rename(columns={"u": "mod", "v": "dir"})
 
@@ -185,7 +185,7 @@ def write_null_forcing(dir_path: str, forcing_type: str):
     columns = [DEF_VARS[forcing_type]["coords"][0]] + DEF_VARS[forcing_type]["vars"]
     df = pd.DataFrame([{var: 0 for var in columns}])
 
-    # FIXME
+    # FIXME - Use always UV
     if forcing_type in ["currents", "winds"]:
         df = df.rename(columns={"u": "mod", "v": "dir"})
 
