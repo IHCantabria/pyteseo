@@ -1,5 +1,5 @@
 import pytest
-from pyteseo.io.substances import import_offline
+from pyteseo.io.substances import import_local
 
 
 @pytest.mark.parametrize(
@@ -10,7 +10,7 @@ from pyteseo.io.substances import import_offline
     ],
 )
 def test_import_offline(substance_type, substance_name):
-    substance = import_offline(substance_type, substance_name)
+    substance = import_local(substance_type, substance_name)
 
     assert bool(substance)
     assert isinstance(substance, dict)

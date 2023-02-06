@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
-
+from pyteseo.io.substances import import_local
 
 # FIXME - for new TESEO v2.0.0:
 # 1. format .csv for all the input
@@ -143,7 +143,7 @@ def set_simulation_parameters(
     }
 
 
-def set_spreading_config(spreading_type: str, duration: timedelta) -> dict:
+def set_spreading_cfg(spreading_type: str, duration: timedelta) -> dict:
     """set spreading configuration
 
     Args:
@@ -261,7 +261,7 @@ def set_hns_table(
     return df.to_string(header=False)
 
 
-def set_spill_points_cfg(
+def set_spill_points_df(
     n_spill_points: int,
     release_time: list[timedelta],
     lon: list[float],
@@ -333,12 +333,27 @@ def set_spill_points_cfg(
     return df
 
 
-def set_substance_cfg() -> pd.DataFrame:
-    pass
+def set_substance_df(substance_type, substance_name, source="local") -> pd.DataFrame:
+    if source.lower() == "local":
+        substance = import_local(substance_type, substance_name)
+        return pd.DataFrame([substance])
+    else:
+        raise NotImplementedError("Call to API and return substance dict")
+
+
+# TODO - Use: set_substance_df(), set_spill_points_df, set_climate_vars_df
+# TODO - All with df structure of spill point per df-row
+def set_spill_points_table(spill_points_df, substance_df, climate_vars_df):
+
+    spill_points_table_fields = ["field1", "field2", "...", "fieldN"]
+    df = pd.merge(pd.merge(spill_points_df, substance_df), climate_vars_df)
+    df = df.get(spill_points_table_fields)
+    df.index += 1
+
+    return df.to_str(header=False)
 
 
 def write_cfg(input_parameters, forcings_parameters, cfg_parameters, output_path):
-
     cfg_txt = f"""* FICHERO DE CONFIGURACIÓN PARA Modelo TESEO (FUEL-FLOTANTES-HNS, 2D-3D)
 *--------------------------------------------------
 * MALLA:

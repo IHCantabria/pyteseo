@@ -13,9 +13,10 @@ from pyteseo.io.cfg import (
     set_instantaneous_release,
     set_processes,
     set_simulation_parameters,
-    set_spill_points_cfg,
-    set_spreading_config,
+    set_spill_points_df,
+    set_spreading_cfg,
     set_time,
+    set_substance_df,
 )
 
 data_path = Path(__file__).parent / "data"
@@ -105,11 +106,11 @@ def test_set_simulation_parameters(error):
 def test_set_spreading_config(keyword, error):
     if error:
         with pytest.raises(ValueError):
-            spreading_cfg = set_spreading_config(
+            spreading_cfg = set_spreading_cfg(
                 spreading_type=keyword, duration=timedelta(hours=3)
             )
     else:
-        spreading_cfg = set_spreading_config(
+        spreading_cfg = set_spreading_cfg(
             spreading_type=keyword, duration=timedelta(hours=3)
         )
         assert spreading_cfg["spreading_duration"] == 3
@@ -136,7 +137,7 @@ def test_set_hns_table():
 
 
 def test_set_spill_point_cfg():
-    spill_points_cfg = set_spill_points_cfg(
+    spill_points_cfg = set_spill_points_df(
         n_spill_points=2,
         release_time=[timedelta(hours=1.5), timedelta(minutes=80)],
         lon=[-3.80, -3.79],
@@ -145,3 +146,8 @@ def test_set_spill_point_cfg():
 
     assert isinstance(spill_points_cfg, pd.DataFrame)
     assert len(spill_points_cfg["thickness"]) == 2
+
+
+def test_set_substance_df():
+    substance = set_substance_df("oil", "oil_example")
+    assert isinstance(substance, pd.DataFrame)

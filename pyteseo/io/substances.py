@@ -3,7 +3,7 @@ import pyteseo
 from pathlib import Path
 
 
-def import_offline(substance_type: str, substance_name: str) -> dict:
+def import_local(substance_type: str, substance_name: str) -> dict:
     substance_type = substance_type.lower()
 
     if substance_type not in ["oil", "hns"]:
