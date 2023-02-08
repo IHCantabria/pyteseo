@@ -2,8 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from datetime import timedelta
 
-from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES, DEF_VARS
+from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES, DEF_VARS, DEF_PATTERNS
 from pyteseo.io.domain import read_coastline, read_grid
 from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
 from pyteseo.io.results import (
@@ -11,6 +12,7 @@ from pyteseo.io.results import (
     read_particles_results,
     read_properties_results,
 )
+from pyteseo.io.cfg import write_cfg
 
 
 class TeseoWrapper:
@@ -57,8 +59,7 @@ class TeseoWrapper:
 
         print("Loading coastline...")
         if Path(input_dir, DEF_FILES["coastline"]).exists():
-            self.path = Path(input_dir, DEF_FILES["coastline"])
-            # TODO - Create Coastline object
+            self.coastline = Coastline(Path(input_dir, DEF_FILES["coastline"]))
         else:
             print("No coastline defined!")
 
@@ -88,10 +89,134 @@ class TeseoWrapper:
             self.waves = None
             write_null_forcing(input_dir, forcing_type="waves")
 
-    def setup(user_parameters):
-        pass
+    def setup(self, parameters: dict):
+        self.parameters = parameters
+
+        # PARAMETERS TO BE FULLFILED FROM DEFAULTS IF THERE ARE NOT DEFINED IN INPUT_DICT
+        if "seawater_kinematic_viscosity" not in self.parameters.keys():
+            self.parameters["seawater_kinematic_viscosity"] = 1.004e-6
+
+        if "seawater_temperature" not in self.parameters.keys():
+            self.parameters["seawater_temperature"] = 17
+
+        if "seawater_density" not in self.parameters.keys():
+            self.parameters["seawater_density"] = 1025
+
+        if "air_temperature" not in self.parameters.keys():
+            self.parameters["air_temperature"] = 15.5
+
+        if "suspended_solid_concentration" not in self.parameters.keys():
+            self.parameters["suspended_solid_concentration"] = 10
+
+        if "water_slope" not in self.parameters.keys():
+            self.parameters["water_slope"] = 0.0005
+
+        # PARAMETERS TO BE FULLFILED FROM CURRENT JOB ARGUMENTS
+        if "inputs_directory" not in self.parameters.keys():
+            self.parameters["inputs_directory"] = DEF_DIRS["inputs"] + "/"
+        if "grid_filename" not in self.parameters.keys():
+            self.parameters["grid_filename"] = Path(self.grid.path).name
+        forcing_parameters = self._set_forcing_parameters()
+        self.parameters["n_spill_points"] = len(self.parameters["spill_points"])
+
+        if "continuous_release" in self.parameters.keys():
+            self.parameters["release_type"] = "continuous"
+            if "release_duration" or "release_timestep" not in self.parameters.keys():
+                raise ValueError("release_duration or release_timestep not founded")
+            if (
+                self.parameters["release_duration"]
+                or self.parameters["release_timestep"] == 0
+            ):
+                raise ValueError("release_duration and release_timestep can't be 0")
+        else:
+            self.parameters["release_type"] = "instantaneous"
+            self.parameters["release_duration"] = timedelta(hours=0)
+            self.parameters["release_timestep"] = timedelta(minutes=0)
+
+        # DEFAULTS BY SUBSTANCE TYPE
+        if self.parameters["substance_type"].lower() == "drifter":
+            self.parameters["processes"] = {}
+            self.parameters["processes"]["spreading"] = False
+            self.parameters["processes"]["evaporation"] = False
+            self.parameters["processes"]["emulsification"] = False
+            self.parameters["processes"]["vertical_dispersion"] = False
+            self.parameters["processes"]["dissolution"] = False
+            self.parameters["processes"]["volatilization"] = False
+            self.parameters["processes"]["sedimentation"] = False
+            self.parameters["processes"]["biodegradation"] = False
+
+        if self.parameters["substance_type"].lower() == "oil":
+            if "processes" not in self.parameters.keys():
+                self.parameters["processes"] = {}
+                self.parameters["processes"]["spreading"] = False
+                self.parameters["processes"]["evaporation"] = True
+                self.parameters["processes"]["emulsification"] = True
+                self.parameters["processes"]["vertical_dispersion"] = False
+                self.parameters["processes"]["dissolution"] = False
+                self.parameters["processes"]["volatilization"] = False
+                self.parameters["processes"]["sedimentation"] = False
+                self.parameters["processes"]["biodegradation"] = False
+
+        if self.parameters["substance_type"].lower() == "hns":
+            if "processes" not in self.parameters.keys():
+                self.parameters["processes"] = {}
+                self.parameters["processes"]["spreading"] = True
+                self.parameters["processes"]["evaporation"] = True
+                self.parameters["processes"]["emulsification"] = False
+                self.parameters["processes"]["vertical_dispersion"] = False
+                self.parameters["processes"]["dissolution"] = True
+                self.parameters["processes"]["volatilization"] = True
+                self.parameters["processes"]["sedimentation"] = False
+                self.parameters["processes"]["biodegradation"] = False
+
+                self.parameters["spreading"] = {}
+                self.parameters["spreading"]["formulation"] = "hns-mohid"
+                self.parameters["spreading"]["duration"] = timedelta(hours=0)
+
+        if "spreading" not in self.parameters.keys():
+            self.parameters["spreading"] = {}
+        if "formulation" not in self.parameters["spreading"].keys():
+            self.parameters["spreading"]["formulation"] = "adios2"
+        if "duration" not in self.parameters["spreading"].keys():
+            self.parameters["spreading"]["duration"] = timedelta(hours=0)
+
+        self.cfg_parameters = parameters
+        self.cfg_path = str(Path(self.path, DEF_PATTERNS["cfg"].replace("*", "teseo")))
+        write_cfg(
+            path=self.cfg_path,
+            forcing_parameters=forcing_parameters,
+            parameters=parameters,
+        )
+
+    def _set_forcing_parameters(self) -> dict:
+
+        parameters = {}
+        parameters["currents_nt"] = self.currents.nt
+        parameters["winds_nt"] = self.winds.nt
+        parameters["waves_nt"] = self.waves.nt
+        parameters["currents_dt"] = self.currents.dt
+        parameters["winds_dt"] = self.winds.dt
+        parameters["waves_dt"] = self.waves.dt
+
+        if self.currents.nx:
+            parameters["currents_n_points"] = self.currents.nx * self.currents.ny
+        else:
+            parameters["currents_n_points"] = 1
+
+        if self.winds.nx:
+            parameters["winds_n_points"] = self.winds.nx * self.winds.ny
+        else:
+            parameters["winds_n_points"] = 1
+
+        if self.waves.nx:
+            parameters["waves_n_points"] = self.waves.nx * self.waves.ny
+        else:
+            parameters["waves_n_points"] = 1
+
+        return parameters
 
     def run(self):
+        self.run_path = Path(self.path, DEF_PATTERNS["run"].replace("*", "teseo"))
         pass
 
     @property
@@ -159,7 +284,7 @@ class Coastline:
 
     @property
     def load(self):
-        return read_grid(self.path)
+        return read_coastline(self.path)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"

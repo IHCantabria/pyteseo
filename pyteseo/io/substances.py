@@ -9,6 +9,8 @@ def import_local(substance_type: str, substance_name: str) -> dict:
     if substance_type not in ["oil", "hns"]:
         raise ValueError("Invalid substance_type")
     package_path = Path(pyteseo.__file__).parent
-    path = Path(package_path, "substances", substance_type, f"{substance_name}.json")
+    path = Path(
+        package_path, "data", "substances", substance_type, f"{substance_name}.json"
+    )
     with open(path) as f:
         return json.loads(f.read())
