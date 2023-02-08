@@ -6,11 +6,9 @@ import pandas as pd
 import pytest
 
 from pyteseo.__init__ import __version__ as v
-from pyteseo.io.cfg import (
-    set_spill_points_df,
-)
+from pyteseo.io.cfg import get_spill_points_df, get_substances_df
 
-data_path = Path(__file__).parent / "data"
+data_path = Path(__file__).parent.parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
 
 
@@ -24,7 +22,7 @@ def setup_teardown():
 
 
 def test_set_spill_point_df():
-    df = set_spill_points_df(
+    df = get_spill_points_df(
         [
             {
                 "release_time": datetime.utcnow().replace(
@@ -55,3 +53,11 @@ def test_set_spill_point_df():
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 2
     assert all(df["volume"].isnull())
+
+
+def test_get_substance_df(
+    substance_names=["oil_example", "oil_example"], substance_type="oil"
+):
+    substance_df = get_substances_df(substance_names, substance_type)
+    assert len(substance_df) == len(substance_names)
+    assert substance_df["density"].values[0] == 816

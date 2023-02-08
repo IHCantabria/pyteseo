@@ -170,7 +170,7 @@ class TeseoWrapper:
                 self.parameters["processes"]["biodegradation"] = False
 
                 self.parameters["spreading"] = {}
-                self.parameters["spreading"]["formulation"] = "hns-mohid"
+                self.parameters["spreading"]["formulation"] = "mohid-hns"
                 self.parameters["spreading"]["duration"] = timedelta(hours=0)
 
         if "spreading" not in self.parameters.keys():

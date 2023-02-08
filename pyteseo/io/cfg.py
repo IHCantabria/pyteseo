@@ -21,7 +21,7 @@ from pyteseo.io.substances import import_local
 # simulation[type, dim, duration, dt]
 
 
-def set_spill_points_df(
+def get_spill_points_df(
     spill_points: list[dict], init_datetime: datetime
 ) -> pd.DataFrame:
 
@@ -89,17 +89,23 @@ def set_spill_points_df(
     return df
 
 
-def set_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
+def get_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
     substances = {}
-    for substance_name in substance_names.unique():
+    for substance_name in list(set(substance_names)):
         if source.lower() == "local":
-            substances[substance_name] = import_local(substance_type, substance_name)
+            substances[substance_name] = pd.DataFrame(
+                [import_local(substance_type, substance_name)]
+            )
         else:
             raise NotImplementedError("Call to API and return substance dict")
-    return substances
+    dfs = [substances[substance_name] for substance_name in substance_names]
+    df = pd.concat(dfs).reset_index()
+    df.index += 1
+    return df
 
 
-def set_climate_df(
+# NOTE - ESTOS DATOS POR LOGICA DEBERIAN FUNCIONAR COMO CUALQUIER OTRO FORCING, NO ASI!
+def get_climate_df(
     n_spill_points,
     seawater_temperature,
     seawater_density,
@@ -316,6 +322,7 @@ def create_tables(
         "thickness",
         "min_thickness",
         "volume",
+        "oil_type",
         "density",
         "density_temperature",
         "viscosity",
@@ -349,18 +356,19 @@ def create_tables(
         "water_slope",
     ]
     df = pd.DataFrame([], columns=keys_table_1 + keys_table_2 + keys_table_3)
-    df_spill_points = set_spill_points_df(spill_points, init_datetime)
+    df_spill_points = get_spill_points_df(spill_points, init_datetime)
     substances = [
-        spill_point["substance_name"]
+        spill_point["substance"]
         for spill_point in spill_points
-        if "substance_name" in spill_point.keys()
+        if "substance" in spill_point.keys()
     ]
 
     if substances:
-        df_substances = set_substances_df(spill_points, substance_type)
+        df_substances = get_substances_df(substances, substance_type)
     else:
         df_substances = pd.DataFrame([])
-    df_climate_vars = set_climate_df(
+
+    df_climate_vars = get_climate_df(
         len(spill_points),
         seawater_temperature,
         seawater_density,
@@ -370,8 +378,17 @@ def create_tables(
 
     data = pd.concat([df_spill_points, df_substances, df_climate_vars], axis=1)
     df = df.append(data, ignore_index=True, sort=False).fillna(0)
+    # Calculate volume
+    df["volume"] = (df["mass"] / df["density"]).fillna(0)
+    # Convert boolean to [0,1]
+    df["organic"] = df["organic"].astype(int).fillna(0)
+    # Convert to [0,1]
+    df["oil_type"].loc[df["oil_type"] == "refined"] = 1
+    df["oil_type"].loc[df["oil_type"] == "crude"] = 0
+    # ID starting in 1
     df.index += 1
 
+    df = df.fillna(0)
     df1 = df.get(keys_table_1)
     df2 = df.get(keys_table_2)
     df3 = df.get(keys_table_3)

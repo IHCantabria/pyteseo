@@ -13,7 +13,7 @@ from pyteseo.io.domain import (
     write_grid,
 )
 
-data_path = Path(__file__).parent / "data"
+data_path = Path(__file__).parent.parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
 
 

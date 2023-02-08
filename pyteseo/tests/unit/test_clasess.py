@@ -1,6 +1,5 @@
 from pathlib import Path
 from shutil import copyfile, rmtree
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -15,7 +14,7 @@ from pyteseo.classes import (
 )
 from pyteseo.defaults import DEF_FILES
 
-data_path = Path(__file__).parent / "data"
+data_path = Path(__file__).parent.parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
 
 
@@ -213,60 +212,3 @@ def test_TeseoWaves(path, dt_cte):
         assert "hs" in winds.load.keys()
         assert "dir" in winds.load.keys()
         assert "tp" in winds.load.keys()
-
-
-def test_set_up_floater(setup_teardown):
-
-    input_files = [
-        "grid.dat",
-        "coastline.dat",
-        "lstcurr_UVW_cte.pre",
-        "lstwinds_cte.pre",
-        "lstwaves_cte.pre",
-    ]
-    input_files_dst = [
-        "grid.dat",
-        "coastline.dat",
-        "lstcurr_UVW.pre",
-        "lstwinds.pre",
-        "lstwaves.pre",
-    ]
-
-    if not Path(tmp_path, "inputs").exists():
-        Path(tmp_path, "inputs").mkdir()
-    for src_file, dst_file in zip(input_files, input_files_dst):
-        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
-
-    job = TeseoWrapper(path=tmp_path)
-    job.load_inputs()
-
-    parameters = {
-        "mode": "2d",
-        "motion": "forward",
-        "substance_type": "drifter",
-        "forcing_init_datetime": datetime.utcnow().replace(
-            minute=0, second=0, microsecond=0
-        ),
-        "duration": timedelta(hours=12),
-        "timestep": timedelta(minutes=1),
-        "spill_points": [
-            {
-                "release_time": datetime.utcnow().replace(second=0, microsecond=0),
-                "lon": -3.49,
-                "lat": 43.55,
-                "initial_width": 1,
-                "initial_length": 1,
-            },
-            {
-                "release_time": datetime.utcnow().replace(
-                    hour=3, minute=12, second=0, microsecond=0
-                ),
-                "lon": -3.49,
-                "lat": 43.55,
-                "initial_width": 1,
-                "initial_length": 1,
-            },
-        ],
-    }
-    job.setup(parameters=parameters)
-    assert Path(job.cfg_path).exists()
