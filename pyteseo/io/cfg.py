@@ -1,6 +1,10 @@
-from datetime import datetime
 import pandas as pd
-import numpy as np
+
+from pyteseo.defaults import (
+    DEF_CFG_PARAMETERS,
+    DEF_PROCESSES_PARAMETERS,
+    DEF_SPILL_POINT_PARAMETERS,
+)
 from pyteseo.io.substances import import_local
 
 # FIXME - for new TESEO v2.0.0:
@@ -21,126 +25,86 @@ from pyteseo.io.substances import import_local
 # simulation[type, dim, duration, dt]
 
 
-def get_spill_points_df(
-    spill_points: list[dict], init_datetime: datetime
-) -> pd.DataFrame:
+def _complete_cfg_parameters(user_parameters) -> dict:
 
+    substance_type = user_parameters["substance_type"]
+
+    cfg_parameters = add_default_parameters(user_parameters, DEF_CFG_PARAMETERS)
+    for i, d in enumerate(cfg_parameters["spill_points"]):
+        cfg_parameters["spill_points"][i] = add_default_parameters(
+            d, DEF_SPILL_POINT_PARAMETERS
+        )
+    cfg_parameters = add_default_parameters(
+        cfg_parameters, DEF_PROCESSES_PARAMETERS[substance_type]
+    )
+
+    return cfg_parameters
+
+
+def add_default_parameters(d, d_defaults):
+    for default_key in d_defaults.keys():
+        if default_key not in d.keys():
+            d[default_key] = d_defaults[default_key]
+    return d
+
+
+def check_user_minimum_parameters(user_parameters):
+    cfg_main_minimum_keys = [
+        "substance_type",
+        "forcing_init_datetime",
+        "duration",
+        "spill_points",
+    ]
+    cfg_spill_point_minimum_keys = [
+        "lon",
+        "lat",
+        "release_time",
+        "initial_width",
+        "initial_length",
+    ]
+
+    check_keys(d=user_parameters, mandatory_keys=cfg_main_minimum_keys)
+    for spill_point in user_parameters["spill_points"]:
+        if user_parameters["substance_type"] in ["oil", "hns"]:
+            check_keys(
+                d=spill_point,
+                mandatory_keys=cfg_spill_point_minimum_keys
+                + ["substance", "mass", "thickness"],
+            )
+        else:
+            check_keys(d=spill_point, mandatory_keys=cfg_spill_point_minimum_keys)
+
+
+def check_keys(d, mandatory_keys):
+    for key in mandatory_keys:
+        if key not in d.keys():
+            raise KeyError(f"Mandatory parameter [{key}] not found")
+
+
+def convert_spill_points_to_df(spill_points: list[dict]) -> pd.DataFrame:
     dfs = []
     for d in spill_points:
-
-        depth = d["depth"] if "depth" in d else np.nan
-        initial_width = d["initial_width"] if "initial_width" in d else np.nan
-        initial_length = d["initial_length"] if "initial_length" in d else np.nan
-        substance = d["substance"] if "substance" in d else np.nan
-        mass = d["mass"] if "mass" in d else np.nan
-        volume = d["volume"] if "volume" in d else np.nan
-        thickness = d["thickness"] if "thickness" in d else np.nan
-        degradation_rate = d["degradation_rate"] if "degradation_rate" in d else np.nan
-        wind_drag_alpha_coefficient = (
-            d["wind_drag_alpha_coefficient"]
-            if "wind_drag_alpha_coefficient" in d
-            else 0.02
-        )
-        wind_drag_beta_coefficient = (
-            d["wind_drag_beta_coefficient"] if "wind_drag_beta_coefficient" in d else 0
-        )
-        currents_factor = d["currents_factor"] if "currents_factor" in d else 1
-        wave_factor = d["wave_factor"] if "wave_factor" in d else 1
-        dispersion_flag = d["dispersion_flag"] if "dispersion_flag" in d else 1
-        dispersion_coefficient = (
-            d["dispersion_coefficient"] if "dispersion_coefficient" in d else 2
-        )
-        vertical_dispersion_coefficient = (
-            d["vertical_dispersion_coefficient"]
-            if "vertical_dispersion_coefficient" in d
-            else 0.01
-        )
-
-        dfs.append(
-            pd.DataFrame(
-                {
-                    "time_to_release": [
-                        (d["release_time"] - init_datetime).total_seconds() / 3600
-                    ],
-                    "lon": [d["lon"]],
-                    "lat": [d["lat"]],
-                    "depth": [depth],
-                    "initial_width": [initial_width],
-                    "initial_length": [initial_length],
-                    "substance": [substance],
-                    "mass": [mass],
-                    "volume": [volume],
-                    "thickness": [thickness],
-                    "degradation_rate": [degradation_rate],
-                    "wind_drag_alpha_coefficient": [wind_drag_alpha_coefficient],
-                    "wind_drag_beta_coefficient": [wind_drag_beta_coefficient],
-                    "currents_factor": [currents_factor],
-                    "wave_factor": [wave_factor],
-                    "dispersion_flag": [dispersion_flag],
-                    "dispersion_coefficient": [dispersion_coefficient],
-                    "vertical_dispersion_coefficient": [
-                        vertical_dispersion_coefficient
-                    ],
-                }
-            )
-        )
+        dfs.append(pd.DataFrame([d]))
     df = pd.concat(dfs).reset_index(drop=True)
     df.index += 1
     return df
 
 
-def get_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
-    substances = {}
-    for substance_name in list(set(substance_names)):
-        if source.lower() == "local":
-            substances[substance_name] = pd.DataFrame(
-                [import_local(substance_type, substance_name)]
-            )
-        else:
-            raise NotImplementedError("Call to API and return substance dict")
-    dfs = [substances[substance_name] for substance_name in substance_names]
-    df = pd.concat(dfs).reset_index()
-    df.index += 1
-    return df
+def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
 
-
-# NOTE - ESTOS DATOS POR LOGICA DEBERIAN FUNCIONAR COMO CUALQUIER OTRO FORCING, NO ASI!
-def get_climate_df(
-    n_spill_points,
-    seawater_temperature,
-    seawater_density,
-    air_temperature,
-    suspended_solid_concentration,
-):
-    df = pd.DataFrame(
-        {
-            "seawater_temperature": [seawater_temperature] * n_spill_points,
-            "seawater_density": [seawater_density] * n_spill_points,
-            "air_temperature": [air_temperature] * n_spill_points,
-            "suspended_solid_concentration": [suspended_solid_concentration]
-            * n_spill_points,
-        }
-    )
-    df.index += 1
-    return df
-
-
-def write_cfg(path, forcing_parameters, parameters):
-
-    release_type = translate_release_type(parameters["release_type"])
-    substance_type = translate_substance_type(parameters["substance_type"])
+    release_type = translate_release_type(simulation_parameters["release_type"])
+    substance_type = translate_substance_type(simulation_parameters["substance_type"])
     spreading_formulation = translate_spreading_formulation(
-        parameters["spreading"]["formulation"]
+        simulation_parameters["spreading_formulation"]
     )
 
     table1, table2, table3 = create_tables(
-        parameters["spill_points"],
-        parameters["forcing_init_datetime"],
-        parameters["substance_type"],
-        parameters["seawater_temperature"],
-        parameters["seawater_density"],
-        parameters["air_temperature"],
-        parameters["suspended_solid_concentration"],
+        simulation_parameters["spill_points"],
+        simulation_parameters["substance_type"],
+        simulation_parameters["seawater_temperature"],
+        simulation_parameters["seawater_density"],
+        simulation_parameters["air_temperature"],
+        simulation_parameters["suspended_solid_concentration"],
     )
 
     cfg_txt = f"""* FICHERO DE CONFIGURACIÓN PARA Modelo TESEO (FUEL-FLOTANTES-HNS, 2D-3D)
@@ -148,7 +112,7 @@ def write_cfg(path, forcing_parameters, parameters):
 * MALLA:
 *--------------------------------------------------
 * Nombre_malla
-{parameters["grid_filename"]}
+{file_parameters["grid_filename"]}
 * Tipo malla(1:xyz; 2:grid)
 {1}
 * Origen_x(°) Origen_y(°) Delta_x(°) Delta_y(°) Delta_z Celda_x Celda_y Celda_z LatMedia
@@ -157,7 +121,7 @@ def write_cfg(path, forcing_parameters, parameters):
 * MALLA DE PROBABILIDADES o CONCENTRACIONES: (SI GRABA_CONC=1)
 *--------------------------------------------------------------------------------------
 * Nombre_malla
-{parameters["grid_filename"]}
+{file_parameters["grid_filename"]}
 * MALLA_CONCS.VS.MALLA_MODELO (0:Malla_concs.NE.Malla_modelo; 1:Malla_concs.EQ.Malla_modelo)
 {0}
 * Tipo malla(1:xyz; 2:grid)
@@ -175,25 +139,25 @@ def write_cfg(path, forcing_parameters, parameters):
 * TIPO_DE_VERTIDO_FLOTANTE(1)_FUEL(2)_HNS(3)
 {substance_type}
 * SIMULO_SPREADING(0:NO;1:SI) ALGORTIMO_SPREADING((1=ALG_DIF.EQUIVALENTE[ADIOS2],2=ALG_ELIPSOIDAL[LEHR],3=ALG_RABEH-KOLLURU[MOHID-HNS])) TIEMPO_PARADA_SPREADING_CUANDO_FUEL (horas)
-{1 if parameters["processes"]["spreading"] else 0}    {spreading_formulation}    {parameters["spreading"]["duration"].total_seconds()/3600}
+{1 if simulation_parameters["spreading"] else 0}    {spreading_formulation}    {simulation_parameters["spreading_duration"].total_seconds()/3600}
 * SIMULO_EVAPORACION(0:NO;1:SI)****SOLO_SI_TIPO_DE_VERTIDO=2 y 3
-{1 if parameters["processes"]["evaporation"] else 0}
+{1 if simulation_parameters["evaporation"] else 0}
 * SIMULO_EMULSIONADO(0:NO;1:SI)****SOLO_SI_TIPO_DE_VERTIDO=2
-{1 if parameters["processes"]["emulsification"] else 0}
+{1 if simulation_parameters["emulsification"] else 0}
 * SIMULO DISPERSIÓN VERTICAL (ENTRAINMENT) = 0:NO; 1:SÍ ****SOLO_SI_TIPO_DE_VERTIDO=2 y 3
-{1 if parameters["processes"]["vertical_dispersion"] else 0}
+{1 if simulation_parameters["vertical_dispersion"] else 0}
 * SIMULO_DISOLUCION VOLATILIZACION SEDIMENTACION BIODEGRADACION_LARGOPLAZO (0:NO;1:SI)****SOLO_SI_TIPO_DE_VERTIDO=3
-{1 if parameters["processes"]["dissolution"] else 0}   {1 if parameters["processes"]["volatilization"] else 0}   {1 if parameters["processes"]["sedimentation"] else 0}    {1 if parameters["processes"]["biodegradation"] else 0}
+{1 if simulation_parameters["dissolution"] else 0}   {1 if simulation_parameters["volatilization"] else 0}   {1 if simulation_parameters["sedimentation"] else 0}    {1 if simulation_parameters["biodegradation"] else 0}
 * VISC_CINEMATICA_AGUA_MAR(m2/s)
-{parameters["seawater_kinematic_viscosity"]}
+{simulation_parameters["seawater_kinematic_viscosity"]}
 * Datos de vertidos:
 * VERTIDO INSTANTANEO(1) O CONTINUO-3D(2)
 {release_type}
 * SI VERTIDO INSTANTANEO: Nº_PUNTOS_DE_VERTIDO
-{len(parameters["spill_points"])}
+{len(simulation_parameters["spill_points"])}
 * SI VERTIDO CONTINUO-3D: DURACION VERTIDO (horas) DT_PULSOS(segundos - Indicaciones: número divisible de la duración del vertido y mayor y múltiplo del paso de tiempo de cálculo --> Si es mayor que DT_PARTS definido en .run, se toma DT_PARTS-es valor máximo para que no haya saltos en graficado))
 * A tener en cuenta: cuanto menor es el DT_PULSOS, mayor será el tiempo de cómputo ya que se introducen más partículas en el medio
-{parameters["release_duration"].total_seconds()/3600}   {parameters["release_timestep"].total_seconds()}
+{simulation_parameters["release_duration"].total_seconds()/3600}   {simulation_parameters["release_timestep"].total_seconds()}
 * PROPIEDADES VERTIDO/MEDIO
 * ID T_inicio Masa   Coord_x  Coord_y   z   Ancho_x Ancho_y Espesor EspMin Volum_TOT    TIPO_FUEL       DENS  TEMP_D0 VISC_K TEMP_V0 WATER_SOLUBILITY  TEMP_SOL  VAPOUR_PRESS TEMP_VP  MOL_WEIGHT  ORGANIC EVAP_MAX EVAP_MIN EMULS_MAX  DENSIDAD_MAR  TEMP_MAR TEMP_AIR
 *      (h)    (Kg)     (°)      (°)  (si 3D)(en sup)(en sup)  (OIL)    (m)   M/D(m3)      (OIL)        (kg/m3) (ºC)   (cSt)   (ºC)       (SI NHS)        (ºC)      (SI NHS)     (ºC)    (kg/kmol) (SI NHS)   (%)      (%)     (OIL)       (kg/m3)      (ºC)    (ºC)
@@ -208,7 +172,7 @@ def write_cfg(path, forcing_parameters, parameters):
 * SIMULACION NUMERICA:
 *--------------------------------------------------
 * TIEMPO_TOTAL(h)
-{parameters["duration"].total_seconds()/3600}
+{simulation_parameters["duration"].total_seconds()/3600}
 *
 * FORZAMIENTOS:
 *--------------------------------------------------
@@ -262,7 +226,7 @@ def write_cfg(path, forcing_parameters, parameters):
 * DIRECTORIO DATOS:
 *------------------------------------------------------
 * SI DIRECTORIO_DATOS_EJECUCION_MODELO=2 -> AÑADIR NUEVA RUTA(); SI DIRECTORIO=1->AÑADIR la ruta no cambia
-{parameters["inputs_directory"]}
+{file_parameters["inputs_directory"]}
 """
 
     with open(path, "w", encoding="utf-8") as f:
@@ -270,40 +234,8 @@ def write_cfg(path, forcing_parameters, parameters):
     return path
 
 
-def translate_spreading_formulation(keyword):
-    if keyword.lower() == "adios2":
-        return 1
-    elif keyword.lower() == "lehr":
-        return 2
-    elif keyword.lower() == "mohid-hns":
-        return 3
-    else:
-        raise ValueError("Invalid spreading formulation")
-
-
-def translate_release_type(keyword):
-    if keyword.lower() == "instantaneous":
-        return 1
-    elif keyword.lower() == "continuous":
-        return 2
-    else:
-        raise ValueError("Invalid release type")
-
-
-def translate_substance_type(keyword):
-    if keyword.lower() == "drifter":
-        return 1
-    elif keyword.lower() == "oil":
-        return 2
-    elif keyword.lower() == "hns":
-        return 3
-    else:
-        raise ValueError("invalid particle type")
-
-
 def create_tables(
     spill_points,
-    init_datetime,
     substance_type,
     seawater_temperature,
     seawater_density,
@@ -355,19 +287,13 @@ def create_tables(
         "vertical_dispersion_coefficient",
         "water_slope",
     ]
-    df = pd.DataFrame([], columns=keys_table_1 + keys_table_2 + keys_table_3)
-    df_spill_points = get_spill_points_df(spill_points, init_datetime)
-    substances = [
-        spill_point["substance"]
-        for spill_point in spill_points
-        if "substance" in spill_point.keys()
-    ]
 
-    if substances:
-        df_substances = get_substances_df(substances, substance_type)
-    else:
-        df_substances = pd.DataFrame([])
+    df_spill_points = convert_spill_points_to_df(spill_points)
 
+    df_substances = get_substances_df(
+        [d["substance"] for d in spill_points if "substance" in d.keys()],
+        substance_type,
+    )
     df_climate_vars = get_climate_df(
         len(spill_points),
         seawater_temperature,
@@ -375,8 +301,9 @@ def create_tables(
         air_temperature,
         suspended_solid_concentration,
     )
-
     data = pd.concat([df_spill_points, df_substances, df_climate_vars], axis=1)
+
+    df = pd.DataFrame([], columns=keys_table_1 + keys_table_2 + keys_table_3)
     df = df.append(data, ignore_index=True, sort=False).fillna(0)
     # Calculate volume
     df["volume"] = (df["mass"] / df["density"]).fillna(0)
@@ -398,3 +325,73 @@ def create_tables(
         df2.to_string(header=False),
         df3.to_string(header=False, index=False),
     )
+
+
+def get_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
+    if not substance_names:
+        return pd.DataFrame([])
+    else:
+        substances = {}
+        for substance_name in list(set(substance_names)):
+            if source.lower() == "local":
+                substances[substance_name] = pd.DataFrame(
+                    [import_local(substance_type, substance_name)]
+                )
+            else:
+                raise NotImplementedError("Call to API and return substance dict")
+        dfs = [substances[substance_name] for substance_name in substance_names]
+        df = pd.concat(dfs).reset_index()
+        df.index += 1
+        return df
+
+
+# NOTE - ESTOS DATOS POR LOGICA DEBERIAN FUNCIONAR COMO CUALQUIER OTRO FORCING, NO ASI!
+def get_climate_df(
+    n_spill_points,
+    seawater_temperature,
+    seawater_density,
+    air_temperature,
+    suspended_solid_concentration,
+):
+    df = pd.DataFrame(
+        {
+            "seawater_temperature": [seawater_temperature] * n_spill_points,
+            "seawater_density": [seawater_density] * n_spill_points,
+            "air_temperature": [air_temperature] * n_spill_points,
+            "suspended_solid_concentration": [suspended_solid_concentration]
+            * n_spill_points,
+        }
+    )
+    df.index += 1
+    return df
+
+
+def translate_spreading_formulation(keyword):
+    if keyword.lower() == "adios2":
+        return 1
+    elif keyword.lower() == "lehr":
+        return 2
+    elif keyword.lower() == "mohid-hns":
+        return 3
+    else:
+        raise ValueError("Invalid spreading formulation")
+
+
+def translate_release_type(keyword):
+    if keyword.lower() == "instantaneous":
+        return 1
+    elif keyword.lower() == "continuous":
+        return 2
+    else:
+        raise ValueError("Invalid release type")
+
+
+def translate_substance_type(keyword):
+    if keyword.lower() == "drifter":
+        return 1
+    elif keyword.lower() == "oil":
+        return 2
+    elif keyword.lower() == "hns":
+        return 3
+    else:
+        raise ValueError("invalid particle type")
