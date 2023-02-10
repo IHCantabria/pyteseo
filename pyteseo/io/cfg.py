@@ -17,7 +17,6 @@ from pyteseo.io.substances import import_local
 #     cte en el espacio --> currents = /absolute_path/cte_currents.csv                  [time, lon, lat, u, v, (w)]
 #     winds y waves igual                                                               [time, lon, lat, hs, tp, dir]
 # 7. definir initial_datetime = [2023, 1, 1, 0, 0, 0]  --> datetime lib for fortran
-
 # grid [path]
 # coastline [adherence, mode, algorithm]
 # processes [spreading[hours, type], ]
@@ -25,7 +24,7 @@ from pyteseo.io.substances import import_local
 # simulation[type, dim, duration, dt]
 
 
-def _complete_cfg_parameters(user_parameters) -> dict:
+def complete_cfg_default_parameters(user_parameters) -> dict:
 
     substance_type = user_parameters["substance_type"]
 
@@ -34,6 +33,9 @@ def _complete_cfg_parameters(user_parameters) -> dict:
         cfg_parameters["spill_points"][i] = add_default_parameters(
             d, DEF_SPILL_POINT_PARAMETERS
         )
+        d["time_to_release"] = (
+            d["release_time"] - user_parameters["forcing_init_datetime"]
+        ).total_seconds() / 3600
     cfg_parameters = add_default_parameters(
         cfg_parameters, DEF_PROCESSES_PARAMETERS[substance_type]
     )
@@ -289,7 +291,6 @@ def create_tables(
     ]
 
     df_spill_points = convert_spill_points_to_df(spill_points)
-
     df_substances = get_substances_df(
         [d["substance"] for d in spill_points if "substance" in d.keys()],
         substance_type,

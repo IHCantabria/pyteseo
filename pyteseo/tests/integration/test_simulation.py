@@ -50,23 +50,19 @@ def test_drifter(setup_teardown):
         "mode": "2d",
         "motion": "forward",
         "substance_type": "drifter",
-        "forcing_init_datetime": datetime.utcnow().replace(
-            minute=0, second=0, microsecond=0
-        ),
+        "forcing_init_datetime": datetime(2023, 1, 1, 0, 0, 0),
         "duration": timedelta(hours=12),
         "timestep": timedelta(minutes=1),
         "spill_points": [
             {
-                "release_time": datetime.utcnow().replace(second=0, microsecond=0),
+                "release_time": datetime(2023, 1, 1, 0, 0, 0) + timedelta(minutes=32),
                 "lon": -3.49,
                 "lat": 43.55,
                 "initial_width": 1,
                 "initial_length": 1,
             },
             {
-                "release_time": datetime.utcnow().replace(
-                    hour=3, minute=12, second=0, microsecond=0
-                ),
+                "release_time": datetime(2023, 1, 1, 0, 0, 0) + timedelta(minutes=12),
                 "lon": -3.49,
                 "lat": 43.55,
                 "initial_width": 1,
@@ -76,6 +72,7 @@ def test_drifter(setup_teardown):
     }
     job.setup(parameters)
     assert Path(job.cfg_path).exists()
+    assert Path(job.run_path).exists()
 
 
 def test_oil(setup_teardown):
@@ -139,6 +136,7 @@ def test_oil(setup_teardown):
     }
     job.setup(parameters)
     assert Path(job.cfg_path).exists()
+    assert Path(job.run_path).exists()
 
 
 def test_hns(setup_teardown):
@@ -202,3 +200,4 @@ def test_hns(setup_teardown):
     }
     job.setup(parameters)
     assert Path(job.cfg_path).exists()
+    assert Path(job.run_path).exists()

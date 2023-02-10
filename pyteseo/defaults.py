@@ -18,9 +18,6 @@ DEF_COORDS = defaults["coords"]
 DEF_TESEO_RESULTS_MAP = defaults["teseo_results_map"]
 
 DEF_CFG_PARAMETERS = {
-    "timestep": timedelta(minutes=1),
-    "mode": "2d",
-    "motion": "forward",
     "seawater_kinematic_viscosity": 1.004e-6,
     "seawater_temperature": 17,
     "seawater_density": 1025,
@@ -30,6 +27,29 @@ DEF_CFG_PARAMETERS = {
     "release_type": "instantaneous",
     "release_duration": timedelta(hours=0),
     "release_timestep": timedelta(minutes=0),
+}
+
+DEF_RUN_PARAMETERS = {
+    "environment": "marine",
+    "mode": "2d",
+    "motion": "forward",
+    "near_field_3d": False,
+    "input_directory": True,
+    "use_coastline": True,
+    "beaching_algorithm": "high",
+    "n_particles": 1000,
+    "use_restart": False,
+    "timestep": timedelta(minutes=1),
+    "use_time_interpolation_currents": True,
+    "use_time_interpolation_winds": True,
+    "use_time_interpolation_waves": True,
+    "execution_scheme": "euler",
+    "particles_save_dt": timedelta(hours=1),
+    "properties_save_dt": timedelta(hours=1),
+    "grids_save_dt": timedelta(hours=1),
+    "save_particles": 1,
+    "save_properties": 1,
+    "save_grids": 1,
 }
 
 DEF_SPILL_POINT_PARAMETERS = {

@@ -5,10 +5,12 @@ import pandas as pd
 
 from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES, DEF_PATTERNS, DEF_VARS
 from pyteseo.io.cfg import (
-    _complete_cfg_parameters,
+    complete_cfg_default_parameters,
     check_user_minimum_parameters,
     write_cfg,
 )
+from pyteseo.io.run import _complete_run_default_parameters
+from pyteseo.io.run import write_run
 from pyteseo.io.domain import read_coastline, read_grid
 from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
 from pyteseo.io.results import (
@@ -25,6 +27,7 @@ class TeseoWrapper:
         Args:
             path (str): path to the simulation folder.
         """
+        print("/n")
         path = Path(path).resolve()
         if not path.exists():
             path.mkdir(parents=True)
@@ -53,7 +56,6 @@ class TeseoWrapper:
             FileNotFoundError: grid file not founded in 'inputs' directory!
         """
         input_dir = Path(self.input_dir).resolve()
-
         print("Loading grid...")
         if Path(input_dir, DEF_FILES["grid"]).exists():
             self.grid = Grid(Path(input_dir, DEF_FILES["grid"]))
@@ -95,25 +97,36 @@ class TeseoWrapper:
     def setup(self, user_parameters: dict):
 
         check_user_minimum_parameters(user_parameters)
-
-        self.setup_cfg(user_parameters)
-
-        # TODO
-        # self.setup_run(user_parameters)
-
-    def setup_cfg(self, user_parameters):
-
-        self.cfg_path = str(Path(self.path, DEF_PATTERNS["cfg"].replace("*", "teseo")))
-
-        self.parameters = _complete_cfg_parameters(user_parameters)
+        print("setting up TESEO's cfg-file...")
+        cfg_parameters = complete_cfg_default_parameters(user_parameters)
         forcing_parameters = self._forcing_parameters
         file_parameters = self._file_parameters
 
+        self.cfg_path = str(Path(self.path, DEF_PATTERNS["cfg"].replace("*", "teseo")))
         write_cfg(
             path=self.cfg_path,
             file_parameters=file_parameters,
             forcing_parameters=forcing_parameters,
-            simulation_parameters=self.parameters,
+            simulation_parameters=cfg_parameters,
+        )
+
+        print("setting up TESEO's cfg-file...")
+        if "first_time_saved" not in user_parameters.keys():
+            first_time_saved = min(
+                [
+                    spill_point["release_time"]
+                    for spill_point in cfg_parameters["spill_points"]
+                ]
+            )
+
+        run_parameters = _complete_run_default_parameters(user_parameters)
+        n_coastal_polygons = self.coastline.n_polygons
+        self.run_path = str(Path(self.path, DEF_PATTERNS["run"].replace("*", "teseo")))
+        write_run(
+            path=self.run_path,
+            run_parameters=run_parameters,
+            first_time_saved=first_time_saved,
+            n_coastal_polygons=n_coastal_polygons,
         )
 
     @property
@@ -139,7 +152,6 @@ class TeseoWrapper:
         return d
 
     def run(self):
-        self.run_path = Path(self.path, DEF_PATTERNS["run"].replace("*", "teseo"))
         pass
 
     @property
