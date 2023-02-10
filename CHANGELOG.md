@@ -5,6 +5,7 @@
 1) Classes for forcings
 2) Create null forcings
 3) Create TeseoWrapper class
+4) Create cfg and run files (beta)
 ### Changed:
 1) modules are getting too big, I split structure into subpackages
 2) generalize i/o of forcings to spatially cte or 2d
