@@ -167,3 +167,65 @@ RUN_MAIN_PARAMETERS = {
     "save_properties": 1,
     "save_grids": 1,
 }
+
+CFG_MAIN_MANDATORY_KEYS = [
+    "substance_type",
+    "forcing_init_datetime",
+    "duration",
+    "spill_points",
+]
+
+CFG_SPILL_POINT_MANDATORY_KEYS = [
+    "lon",
+    "lat",
+    "release_time",
+    "initial_width",
+    "initial_length",
+]
+
+CFG_KEYS_FOR_TABLE_1 = [
+    "hours_to_release",
+    "mass",
+    "lon",
+    "lat",
+    "depth",
+    "initial_width",
+    "initial_length",
+    "thickness",
+    "min_thickness",
+    "volume",
+    "oil_type",
+    "density",
+    "density_temperature",
+    "viscosity",
+    "viscosity_temperature",
+    "solubility",
+    "solubility_temperature",
+    "vapour_pressure",
+    "vapour_pressure_temperature",
+    "molecular_weight",
+    "organic",
+    "evaporation_max",
+    "evaporation_min",
+    "emulsification_max",
+    "seawater_density",
+    "seawater_temperature",
+    "air_temperature",
+]
+
+CFG_KEYS_FOR_TABLE_2 = [
+    "suspended_solid_concentration",
+    "sorption_coeficient",
+    "degradation_rate",
+]
+
+CFG_KEYS_FOR_TABLE_3 = [
+    "currents_factor",
+    "wind_drag_alpha_coefficient",
+    "wind_drag_beta_coefficient",
+    "waves_factor",
+    "dispersion_flag",
+    "dispersion_coefficient",
+    "vertical_dispersion_coefficient",
+    "water_slope",
+]

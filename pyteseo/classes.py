@@ -9,13 +9,14 @@ from pyteseo.defaults import (
     FILE_NAMES,
     FILE_PATTERNS,
     VARIABLE_NAMES,
+    CFG_MAIN_MANDATORY_KEYS,
+    CFG_SPILL_POINT_MANDATORY_KEYS,
 )
 from pyteseo.io.cfg import (
     complete_cfg_default_parameters,
-    check_user_minimum_parameters,
     write_cfg,
 )
-from pyteseo.io.run import _complete_run_default_parameters
+from pyteseo.io.run import complete_run_default_parameters
 from pyteseo.io.run import write_run
 from pyteseo.io.domain import read_coastline, read_grid
 from pyteseo.io.forcings import read_2d_forcing, read_cte_forcing, write_null_forcing
@@ -27,13 +28,21 @@ from pyteseo.io.results import (
 
 
 class TeseoWrapper:
-    def __init__(self, path: str):
-        """wrapper of configuration, execution and postprocess of a TESEO's simulation.
+    def __init__(self, path: str, simulation_keyword: str = "teseo"):
+        """wrapper of configuration, execution and postprocess of a TESEO's simulation
 
         Args:
-            path (str): path to the simulation folder.
+            path (str): ath to the simulation folder
+            simulation_keyword (str, optional): keyword to name simulation files. Defaults to "teseo".
         """
-        print("/n")
+
+        print("\n")
+        self.simulation_keyword = simulation_keyword
+        self.create_folder_structure(path)
+
+    def create_folder_structure(self, path):
+
+        print("Creating TESEO folder structure...")
         path = Path(path).resolve()
         if not path.exists():
             path.mkdir(parents=True)
@@ -42,8 +51,15 @@ class TeseoWrapper:
         if not input_dir.exists():
             input_dir.mkdir(parents=True)
 
+        output_dir = Path(path, DIRECTORY_NAMES["output"])
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
+
         self.path = str(path)
         self.input_dir = str(input_dir)
+        self.output_dir = str(output_dir)
+
+        print(f"DONE! Created @ {self.path}\n")
 
     def load_inputs(
         self,
@@ -99,6 +115,7 @@ class TeseoWrapper:
             print("No waves defined, creating null waves...")
             self.waves = None
             write_null_forcing(input_dir, forcing_type="waves")
+        print("DONE!\n")
 
     def setup(self, user_parameters: dict):
 
@@ -108,14 +125,16 @@ class TeseoWrapper:
         forcing_parameters = self._forcing_parameters
         file_parameters = self._file_parameters
 
-        self.cfg_path = str(Path(self.path, FILE_PATTERNS["cfg"].replace("*", "teseo")))
+        self.cfg_path = str(
+            Path(self.path, FILE_PATTERNS["cfg"].replace("*", self.simulation_keyword))
+        )
         write_cfg(
             path=self.cfg_path,
             file_parameters=file_parameters,
             forcing_parameters=forcing_parameters,
             simulation_parameters=cfg_parameters,
         )
-
+        print("cfg-file created\n")
         print("setting up TESEO's cfg-file...")
         if "first_time_saved" not in user_parameters.keys():
             first_time_saved = min(
@@ -125,15 +144,18 @@ class TeseoWrapper:
                 ]
             )
 
-        run_parameters = _complete_run_default_parameters(user_parameters)
+        run_parameters = complete_run_default_parameters(user_parameters)
         n_coastal_polygons = self.coastline.n_polygons
-        self.run_path = str(Path(self.path, FILE_PATTERNS["run"].replace("*", "teseo")))
+        self.run_path = str(
+            Path(self.path, FILE_PATTERNS["run"].replace("*", self.simulation_keyword))
+        )
         write_run(
             path=self.run_path,
             run_parameters=run_parameters,
             first_time_saved=first_time_saved,
             n_coastal_polygons=n_coastal_polygons,
         )
+        print("run-file created\n")
 
     @property
     def _file_parameters(self) -> dict:
@@ -174,6 +196,29 @@ class TeseoWrapper:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
+
+
+def check_user_minimum_parameters(
+    user_parameters,
+    cfg_mandatory_keys=CFG_MAIN_MANDATORY_KEYS,
+    cfg_spill_point_mandatory_keys=CFG_SPILL_POINT_MANDATORY_KEYS,
+):
+    check_keys(d=user_parameters, mandatory_keys=cfg_mandatory_keys)
+    for spill_point in user_parameters["spill_points"]:
+        if user_parameters["substance_type"] in ["oil", "hns"]:
+            check_keys(
+                d=spill_point,
+                mandatory_keys=cfg_spill_point_mandatory_keys
+                + ["substance", "mass", "thickness"],
+            )
+        else:
+            check_keys(d=spill_point, mandatory_keys=cfg_spill_point_mandatory_keys)
+
+
+def check_keys(d, mandatory_keys):
+    for key in mandatory_keys:
+        if key not in d.keys():
+            raise KeyError(f"Mandatory parameter [{key}] not found")
 
 
 class Grid:

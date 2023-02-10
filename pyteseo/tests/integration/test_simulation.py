@@ -71,6 +71,9 @@ def test_drifter(setup_teardown):
         ],
     }
     job.setup(parameters)
+    assert Path(job.path).exists()
+    assert Path(job.input_dir).exists()
+    assert Path(job.output_dir).exists()
     assert Path(job.cfg_path).exists()
     assert Path(job.run_path).exists()
 
@@ -135,6 +138,9 @@ def test_oil(setup_teardown):
         ],
     }
     job.setup(parameters)
+    assert Path(job.path).exists()
+    assert Path(job.input_dir).exists()
+    assert Path(job.output_dir).exists()
     assert Path(job.cfg_path).exists()
     assert Path(job.run_path).exists()
 
@@ -199,5 +205,8 @@ def test_hns(setup_teardown):
         ],
     }
     job.setup(parameters)
+    assert Path(job.path).exists()
+    assert Path(job.input_dir).exists()
+    assert Path(job.output_dir).exists()
     assert Path(job.cfg_path).exists()
     assert Path(job.run_path).exists()

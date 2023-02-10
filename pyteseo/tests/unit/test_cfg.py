@@ -9,8 +9,9 @@ from pyteseo.__init__ import __version__ as v
 from pyteseo.io.cfg import (
     convert_spill_points_to_df,
     get_substances_df,
-    check_user_minimum_parameters,
 )
+from pyteseo.classes import check_user_minimum_parameters
+
 
 data_path = Path(__file__).parent.parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")

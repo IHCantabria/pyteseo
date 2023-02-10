@@ -43,3 +43,10 @@ def _check_n_vars(df, varnames):
         raise ValueError(
             f"DataFrame has {df.shape[1]} columns not equal to vars: {varnames}!"
         )
+
+
+def _add_default_parameters(d, d_defaults):
+    for default_key in d_defaults.keys():
+        if default_key not in d.keys():
+            d[default_key] = d_defaults[default_key]
+    return d

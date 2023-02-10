@@ -1,15 +1,9 @@
 from pyteseo.defaults import RUN_MAIN_PARAMETERS
+from pyteseo.io.utils import _add_default_parameters
 
 
-def _complete_run_default_parameters(user_parameters) -> dict:
-    return add_default_parameters(user_parameters, RUN_MAIN_PARAMETERS)
-
-
-def add_default_parameters(d, d_defaults):
-    for default_key in d_defaults.keys():
-        if default_key not in d.keys():
-            d[default_key] = d_defaults[default_key]
-    return d
+def complete_run_default_parameters(user_parameters) -> dict:
+    return _add_default_parameters(user_parameters, RUN_MAIN_PARAMETERS)
 
 
 def write_run(path, run_parameters, first_time_saved, n_coastal_polygons):
@@ -69,10 +63,10 @@ def write_run(path, run_parameters, first_time_saved, n_coastal_polygons):
 def translate_environment(keyword):
     if keyword.lower() == "marine":
         return 1
-    elif keyword.lower() == "reiverine":
+    elif keyword.lower() == "riverine":
         return 2
     else:
-        raise TypeError()
+        raise TypeError(f"invalid parameter in run-file (environment = {keyword})")
 
 
 def translate_mode(keyword):
@@ -81,7 +75,7 @@ def translate_mode(keyword):
     elif keyword.lower() == "3d":
         return 2
     else:
-        raise TypeError()
+        raise TypeError(f"invalid parameter in run-file (mode = {keyword})")
 
 
 def translate_motion(keyword):
@@ -90,7 +84,7 @@ def translate_motion(keyword):
     elif keyword.lower() in ["backward", "backwards", "backtracking"]:
         return 2
     else:
-        raise TypeError()
+        raise TypeError(f"invalid parameter in run-file (motion = {keyword})")
 
 
 def translate_beaching_algorithm(keyword):
@@ -99,7 +93,9 @@ def translate_beaching_algorithm(keyword):
     elif keyword.lower() in ["local", "high"]:
         return 2
     else:
-        raise TypeError()
+        raise TypeError(
+            f"invalid parameter in run-file (beaching_algorithm = {keyword})"
+        )
 
 
 def translate_execution_scheme(keyword):
@@ -108,4 +104,4 @@ def translate_execution_scheme(keyword):
     elif keyword.lower() == "runge-kutta":
         return 2
     else:
-        raise TypeError()
+        raise TypeError(f"invalid parameter in run-file (execution_scheme = {keyword})")

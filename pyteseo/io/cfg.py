@@ -4,8 +4,12 @@ from pyteseo.defaults import (
     CFG_MAIN_PARAMETERS,
     CFG_PROCESSES_PARAMETERS,
     CFG_SPILL_POINT_PARAMETERS,
+    CFG_KEYS_FOR_TABLE_1,
+    CFG_KEYS_FOR_TABLE_2,
+    CFG_KEYS_FOR_TABLE_3,
 )
 from pyteseo.io.substances import import_local
+from pyteseo.io.utils import _add_default_parameters
 
 # FIXME - for new TESEO v2.0.0:
 # 1. format .csv for all the input
@@ -26,70 +30,42 @@ from pyteseo.io.substances import import_local
 
 def complete_cfg_default_parameters(user_parameters) -> dict:
 
-    substance_type = user_parameters["substance_type"]
+    CFG_MAIN_PARAMETERS.update(
+        CFG_PROCESSES_PARAMETERS[user_parameters["substance_type"]]
+    )
 
-    cfg_parameters = add_default_parameters(user_parameters, CFG_MAIN_PARAMETERS)
-    for i, d in enumerate(cfg_parameters["spill_points"]):
-        cfg_parameters["spill_points"][i] = add_default_parameters(
-            d, CFG_SPILL_POINT_PARAMETERS
-        )
-        d["time_to_release"] = (
-            d["release_time"] - user_parameters["forcing_init_datetime"]
-        ).total_seconds() / 3600
-    cfg_parameters = add_default_parameters(
-        cfg_parameters, CFG_PROCESSES_PARAMETERS[substance_type]
+    cfg_parameters = _add_default_parameters(user_parameters, CFG_MAIN_PARAMETERS)
+
+    cfg_parameters["spill_points"] = add_spill_point_default_parameters(
+        cfg_parameters["spill_points"]
+    )
+
+    cfg_parameters["spill_points"] = add_hours_to_release_to_spill_points(
+        cfg_parameters["spill_points"], cfg_parameters["forcing_init_datetime"]
     )
 
     return cfg_parameters
 
 
-def add_default_parameters(d, d_defaults):
-    for default_key in d_defaults.keys():
-        if default_key not in d.keys():
-            d[default_key] = d_defaults[default_key]
-    return d
+def add_hours_to_release_to_spill_points(
+    spill_points, forcing_init_datetime
+) -> list[dict]:
+    for i, d in enumerate(spill_points):
+        d["hours_to_release"] = (
+            d["release_time"] - forcing_init_datetime
+        ).total_seconds() / 3600
+        spill_points[i] = d
+
+    return spill_points
 
 
-def check_user_minimum_parameters(user_parameters):
-    cfg_main_minimum_keys = [
-        "substance_type",
-        "forcing_init_datetime",
-        "duration",
-        "spill_points",
-    ]
-    cfg_spill_point_minimum_keys = [
-        "lon",
-        "lat",
-        "release_time",
-        "initial_width",
-        "initial_length",
-    ]
+def add_spill_point_default_parameters(
+    spill_points, d_defaults=CFG_SPILL_POINT_PARAMETERS
+) -> list[dict]:
+    for i, d in enumerate(spill_points):
+        spill_points[i] = _add_default_parameters(d, d_defaults)
 
-    check_keys(d=user_parameters, mandatory_keys=cfg_main_minimum_keys)
-    for spill_point in user_parameters["spill_points"]:
-        if user_parameters["substance_type"] in ["oil", "hns"]:
-            check_keys(
-                d=spill_point,
-                mandatory_keys=cfg_spill_point_minimum_keys
-                + ["substance", "mass", "thickness"],
-            )
-        else:
-            check_keys(d=spill_point, mandatory_keys=cfg_spill_point_minimum_keys)
-
-
-def check_keys(d, mandatory_keys):
-    for key in mandatory_keys:
-        if key not in d.keys():
-            raise KeyError(f"Mandatory parameter [{key}] not found")
-
-
-def convert_spill_points_to_df(spill_points: list[dict]) -> pd.DataFrame:
-    dfs = []
-    for d in spill_points:
-        dfs.append(pd.DataFrame([d]))
-    df = pd.concat(dfs).reset_index(drop=True)
-    df.index += 1
-    return df
+    return spill_points
 
 
 def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
@@ -245,51 +221,6 @@ def create_tables(
     suspended_solid_concentration,
 ):
 
-    keys_table_1 = [
-        "time_to_release",
-        "mass",
-        "lon",
-        "lat",
-        "depth",
-        "initial_width",
-        "initial_length",
-        "thickness",
-        "min_thickness",
-        "volume",
-        "oil_type",
-        "density",
-        "density_temperature",
-        "viscosity",
-        "viscosity_temperature",
-        "solubility",
-        "solubility_temperature",
-        "vapour_pressure",
-        "vapour_pressure_temperature",
-        "molecular_weight",
-        "organic",
-        "evaporation_max",
-        "evaporation_min",
-        "emulsification_max",
-        "seawater_density",
-        "seawater_temperature",
-        "air_temperature",
-    ]
-    keys_table_2 = [
-        "suspended_solid_concentration",
-        "sorption_coeficient",
-        "degradation_rate",
-    ]
-    keys_table_3 = [
-        "currents_factor",
-        "wind_drag_alpha_coefficient",
-        "wind_drag_beta_coefficient",
-        "waves_factor",
-        "dispersion_flag",
-        "dispersion_coefficient",
-        "vertical_dispersion_coefficient",
-        "water_slope",
-    ]
-
     df_spill_points = convert_spill_points_to_df(spill_points)
     df_substances = get_substances_df(
         [d["substance"] for d in spill_points if "substance" in d.keys()],
@@ -304,8 +235,11 @@ def create_tables(
     )
     data = pd.concat([df_spill_points, df_substances, df_climate_vars], axis=1)
 
-    df = pd.DataFrame([], columns=keys_table_1 + keys_table_2 + keys_table_3)
-    df = df.append(data, ignore_index=True, sort=False).fillna(0)
+    df = pd.DataFrame(
+        [], columns=CFG_KEYS_FOR_TABLE_1 + CFG_KEYS_FOR_TABLE_2 + CFG_KEYS_FOR_TABLE_3
+    )
+    df = pd.concat([df, data]).fillna(0)
+
     # Calculate volume
     df["volume"] = (df["mass"] / df["density"]).fillna(0)
     # Convert boolean to [0,1]
@@ -317,15 +251,24 @@ def create_tables(
     df.index += 1
 
     df = df.fillna(0)
-    df1 = df.get(keys_table_1)
-    df2 = df.get(keys_table_2)
-    df3 = df.get(keys_table_3)
+    df1 = df.get(CFG_KEYS_FOR_TABLE_1)
+    df2 = df.get(CFG_KEYS_FOR_TABLE_2)
+    df3 = df.get(CFG_KEYS_FOR_TABLE_3)
 
     return (
         df1.to_string(header=False),
         df2.to_string(header=False),
         df3.to_string(header=False, index=False),
     )
+
+
+def convert_spill_points_to_df(spill_points: list[dict]) -> pd.DataFrame:
+    dfs = []
+    for d in spill_points:
+        dfs.append(pd.DataFrame([d]))
+    df = pd.concat(dfs).reset_index(drop=True)
+    df.index += 1
+    return df
 
 
 def get_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
@@ -339,14 +282,15 @@ def get_substances_df(substance_names, substance_type, source="local") -> pd.Dat
                     [import_local(substance_type, substance_name)]
                 )
             else:
-                raise NotImplementedError("Call to API and return substance dict")
+                raise NotImplementedError(
+                    "Call to external API and return substance dict {substance_name: dataframe}"
+                )
         dfs = [substances[substance_name] for substance_name in substance_names]
         df = pd.concat(dfs).reset_index()
         df.index += 1
         return df
 
 
-# NOTE - ESTOS DATOS POR LOGICA DEBERIAN FUNCIONAR COMO CUALQUIER OTRO FORCING, NO ASI!
 def get_climate_df(
     n_spill_points,
     seawater_temperature,
