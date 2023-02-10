@@ -1,9 +1,9 @@
 import pandas as pd
 
 from pyteseo.defaults import (
-    DEF_CFG_PARAMETERS,
-    DEF_PROCESSES_PARAMETERS,
-    DEF_SPILL_POINT_PARAMETERS,
+    CFG_MAIN_PARAMETERS,
+    CFG_PROCESSES_PARAMETERS,
+    CFG_SPILL_POINT_PARAMETERS,
 )
 from pyteseo.io.substances import import_local
 
@@ -28,16 +28,16 @@ def complete_cfg_default_parameters(user_parameters) -> dict:
 
     substance_type = user_parameters["substance_type"]
 
-    cfg_parameters = add_default_parameters(user_parameters, DEF_CFG_PARAMETERS)
+    cfg_parameters = add_default_parameters(user_parameters, CFG_MAIN_PARAMETERS)
     for i, d in enumerate(cfg_parameters["spill_points"]):
         cfg_parameters["spill_points"][i] = add_default_parameters(
-            d, DEF_SPILL_POINT_PARAMETERS
+            d, CFG_SPILL_POINT_PARAMETERS
         )
         d["time_to_release"] = (
             d["release_time"] - user_parameters["forcing_init_datetime"]
         ).total_seconds() / 3600
     cfg_parameters = add_default_parameters(
-        cfg_parameters, DEF_PROCESSES_PARAMETERS[substance_type]
+        cfg_parameters, CFG_PROCESSES_PARAMETERS[substance_type]
     )
 
     return cfg_parameters

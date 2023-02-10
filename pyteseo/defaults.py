@@ -1,23 +1,84 @@
-import json
+from datetime import timedelta
 
 import numpy as np
 
-from pathlib import Path
-from datetime import timedelta
+DIRECTORY_NAMES = {"input": "input", "output": "output"}
 
+FILE_NAMES = {
+    "grid": "grid.dat",
+    "results_grid": "results_grid.dat",
+    "coastline": "coastline.dat",
+    "currents": "lstcurr_UVW.pre",
+    "winds": "lstwinds.pre",
+    "waves": "lstwaves.pre",
+    "teseo_grid_coordinates": "grid_coordinates.txt",
+}
 
-with open(Path(__file__).parent / "defaults.json", "r") as f:
-    data = f.read()
-defaults = json.loads(data)
+FILE_PATTERNS = {
+    "polygons": "coastline_polygon_*.dat",
+    "currents": "currents_*h.txt",
+    "winds": "winds_*h.txt",
+    "waves": "waves_*h.txt",
+    "cfg": "*.cfg",
+    "run": "*.run",
+    "teseo_particles": "*_particles_*.txt",
+    "teseo_properties": "*_properties_*.txt",
+    "teseo_grids": "*_grid_*.txt",
+    "export_particles": "particles_*.*",
+    "export_properties": "properties_*.*",
+    "export_grids": "grids_*.*",
+}
 
-DEF_DIRS = defaults["dirs"]
-DEF_FILES = defaults["files"]
-DEF_PATTERNS = defaults["patterns"]
-DEF_VARS = defaults["varnames"]
-DEF_COORDS = defaults["coords"]
-DEF_TESEO_RESULTS_MAP = defaults["teseo_results_map"]
+VARIABLE_NAMES = {
+    "currents": {"coords": ["time", "lon", "lat"], "vars": ["u", "v"]},
+    "winds": {"coords": ["time", "lon", "lat"], "vars": ["u", "v"]},
+    "waves": {"coords": ["time", "lon", "lat"], "vars": ["hs", "dir", "tp"]},
+    "currents_depthavg": {
+        "coords": ["time", "lon", "lat"],
+        "vars": ["u_depthavg", "v_depthavg"],
+    },
+}
 
-DEF_CFG_PARAMETERS = {
+COORDINATE_NAMES = {"x": "lon", "y": "lat", "z": "depth", "t": "time"}
+
+RESULTS_MAP = {
+    "time (h)": "time",
+    "longitude (º)": "lon",
+    "latitude (º)": "lat",
+    "depth (m)": "depth",
+    "status_index (-)": "status_index",
+    "spill_id (-)": "spill_id",
+    "subspill_id (-)": "subspill_id",
+    "centre_of_mass_lon (º)": "centroid_lon",
+    "centre_of_mass_lat (º)": "centroid_lat",
+    "area (m2)": "area",
+    "thickness (m)": "thickness",
+    "density (kg/m3)": "density",
+    "kinematic_viscosity (cst)": "kinematic_viscosity",
+    "surface (kg)": "surface",
+    "beached (kg)": "beached",
+    "evaporated (kg)": "evaporated",
+    "dispersed (kg)": "dispersed",
+    "column (kg)": "column",
+    "floor (kg)": "floor",
+    "emulsified_water (kg)": "emulsified_water",
+    "emulsified_beached (kg)": "emulsified_beached",
+    "outside (kg)": "outside",
+    "balance (%)": "balance_perctentage",
+    "surface (%)": "surface_perctentage",
+    "beached (%)": "beached_perctentage",
+    "evaporated (%)": "evaporated_perctentage",
+    "dispersed (%)": "dispersed_perctentage",
+    "column (%)": "column_perctentage",
+    "floor (%)": "floor_perctentage",
+    "emulsified (%)": "emulsified_perctentage",
+    "outside (%)": "outside_perctentage",
+    "surface_mass_per_area (kg/m2)": "surface_mass_per_area",
+    "presence_probability (%)": "presence_probability",
+    "particles_per_cell (-)": "particles_count",
+}
+
+CFG_MAIN_PARAMETERS = {
     "seawater_kinematic_viscosity": 1.004e-6,
     "seawater_temperature": 17,
     "seawater_density": 1025,
@@ -29,30 +90,7 @@ DEF_CFG_PARAMETERS = {
     "release_timestep": timedelta(minutes=0),
 }
 
-DEF_RUN_PARAMETERS = {
-    "environment": "marine",
-    "mode": "2d",
-    "motion": "forward",
-    "near_field_3d": False,
-    "input_directory": True,
-    "use_coastline": True,
-    "beaching_algorithm": "high",
-    "n_particles": 1000,
-    "use_restart": False,
-    "timestep": timedelta(minutes=1),
-    "use_time_interpolation_currents": True,
-    "use_time_interpolation_winds": True,
-    "use_time_interpolation_waves": True,
-    "execution_scheme": "euler",
-    "particles_save_dt": timedelta(hours=1),
-    "properties_save_dt": timedelta(hours=1),
-    "grids_save_dt": timedelta(hours=1),
-    "save_particles": 1,
-    "save_properties": 1,
-    "save_grids": 1,
-}
-
-DEF_SPILL_POINT_PARAMETERS = {
+CFG_SPILL_POINT_PARAMETERS = {
     "depth": np.nan,
     "initial_width": np.nan,
     "initial_length": np.nan,
@@ -68,7 +106,7 @@ DEF_SPILL_POINT_PARAMETERS = {
     "vertical_dispersion_coefficient": 0.01,
 }
 
-DEF_PROCESSES_PARAMETERS = {
+CFG_PROCESSES_PARAMETERS = {
     "drifter": {
         "spreading": False,
         "spreading_formulation": "adios2",
@@ -105,4 +143,27 @@ DEF_PROCESSES_PARAMETERS = {
         "sedimentation": False,
         "biodegradation": False,
     },
+}
+
+RUN_MAIN_PARAMETERS = {
+    "environment": "marine",
+    "mode": "2d",
+    "motion": "forward",
+    "near_field_3d": False,
+    "input_directory": True,
+    "use_coastline": True,
+    "beaching_algorithm": "high",
+    "n_particles": 1000,
+    "use_restart": False,
+    "timestep": timedelta(minutes=1),
+    "use_time_interpolation_currents": True,
+    "use_time_interpolation_winds": True,
+    "use_time_interpolation_waves": True,
+    "execution_scheme": "euler",
+    "particles_save_dt": timedelta(hours=1),
+    "properties_save_dt": timedelta(hours=1),
+    "grids_save_dt": timedelta(hours=1),
+    "save_particles": 1,
+    "save_properties": 1,
+    "save_grids": 1,
 }

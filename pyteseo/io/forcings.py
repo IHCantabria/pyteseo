@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pyteseo.defaults import DEF_FILES, DEF_PATTERNS, DEF_VARS
+from pyteseo.defaults import FILE_NAMES, FILE_PATTERNS, VARIABLE_NAMES
 from pyteseo.io.utils import (
     _check_cte_dt,
     _check_lonlat_range,
@@ -27,7 +27,7 @@ def read_cte_forcing(path: str, forcing_type: str, dt: float) -> pd.DataFrame:
     Returns:
         pd.DataFrame: forcing DataFrame, columns=[time, var1, var2, ..., varN]
     """
-    file_column_names = DEF_VARS[forcing_type]["vars"]
+    file_column_names = VARIABLE_NAMES[forcing_type]["vars"]
 
     path = Path(path)
     df = pd.read_csv(path, delimiter="\s+", header=None)
@@ -53,8 +53,8 @@ def read_2d_forcing(path: str, forcing_type: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: forcing DataFrame, columns=[time, lon, lat, var1, var2, ..., varN]
     """
-    coordnames = DEF_VARS[forcing_type]["coords"]
-    varnames = DEF_VARS[forcing_type]["vars"]
+    coordnames = VARIABLE_NAMES[forcing_type]["coords"]
+    varnames = VARIABLE_NAMES[forcing_type]["vars"]
     file_column_names = (coordnames + varnames)[1:]
 
     path = Path(path)
@@ -110,9 +110,9 @@ def write_cte_forcing(
         forcing_type (str): 'currents', 'winds', or 'waves'
         nan_value (int, optional): value for NaN sustitution. Defaults to 0.
     """
-    lst_filename = DEF_FILES[forcing_type]
-    coordnames = DEF_VARS[forcing_type]["coords"][0]
-    varnames = DEF_VARS[forcing_type]["vars"]
+    lst_filename = FILE_NAMES[forcing_type]
+    coordnames = VARIABLE_NAMES[forcing_type]["coords"][0]
+    varnames = VARIABLE_NAMES[forcing_type]["vars"]
     # FIXME - Use always UV
     if forcing_type in ["currents", "winds"]:
         varnames = ["mod", "dir"]
@@ -146,10 +146,10 @@ def write_2d_foring(
         forcing_type (str): 'currents', 'winds', or 'waves'
         nan_value (int, optional): value for NaN sustitution. Defaults to 0.
     """
-    lst_filename = DEF_FILES[forcing_type]
-    file_pattern = DEF_PATTERNS[forcing_type]
-    varnames = DEF_VARS[forcing_type]["vars"]
-    coordnames = DEF_VARS[forcing_type]["coords"]
+    lst_filename = FILE_NAMES[forcing_type]
+    file_pattern = FILE_PATTERNS[forcing_type]
+    varnames = VARIABLE_NAMES[forcing_type]["vars"]
+    coordnames = VARIABLE_NAMES[forcing_type]["coords"]
     path = Path(dir_path, lst_filename)
 
     df = df.sort_values(coordnames)
@@ -182,7 +182,9 @@ def write_null_forcing(dir_path: str, forcing_type: str):
         dir_path (str): path to the 'inputs' directory of the simulation
         forcing_type (str): 'currents', 'winds', or 'waves'
     """
-    columns = [DEF_VARS[forcing_type]["coords"][0]] + DEF_VARS[forcing_type]["vars"]
+    columns = [VARIABLE_NAMES[forcing_type]["coords"][0]] + VARIABLE_NAMES[
+        forcing_type
+    ]["vars"]
     df = pd.DataFrame([{var: 0 for var in columns}])
 
     # FIXME - Use always UV

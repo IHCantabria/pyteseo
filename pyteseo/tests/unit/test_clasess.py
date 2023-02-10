@@ -12,7 +12,7 @@ from pyteseo.classes import (
     TeseoWrapper,
     Coastline,
 )
-from pyteseo.defaults import DEF_FILES
+from pyteseo.defaults import FILE_NAMES
 
 data_path = Path(__file__).parent.parent / "data"
 tmp_path = Path(f"./tmp_pyteseo_{v}_tests")
@@ -81,10 +81,10 @@ def setup_teardown():
 )
 def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
 
-    if not Path(tmp_path, "inputs").exists():
-        Path(tmp_path, "inputs").mkdir()
+    if not Path(tmp_path, "input").exists():
+        Path(tmp_path, "input").mkdir()
     for src_file, dst_file in zip(input_files, input_files_dst):
-        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
+        copyfile(Path(data_path, src_file), Path(tmp_path, "input", dst_file))
 
     job = TeseoWrapper(path=tmp_path)
     assert Path(job.path).exists()
@@ -95,10 +95,10 @@ def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
             job.load_inputs()
     else:
         job.load_inputs()
-        assert Path(job.input_dir, DEF_FILES["grid"]).exists()
-        assert Path(job.input_dir, DEF_FILES["currents"]).exists()
-        assert Path(job.input_dir, DEF_FILES["winds"]).exists()
-        assert Path(job.input_dir, DEF_FILES["waves"]).exists()
+        assert Path(job.input_dir, FILE_NAMES["grid"]).exists()
+        assert Path(job.input_dir, FILE_NAMES["currents"]).exists()
+        assert Path(job.input_dir, FILE_NAMES["winds"]).exists()
+        assert Path(job.input_dir, FILE_NAMES["waves"]).exists()
 
 
 @pytest.mark.parametrize(
@@ -140,7 +140,7 @@ def test_TeseoCoastline(path, error):
 @pytest.mark.parametrize(
     "path, dt_cte",
     [
-        (Path(data_path, DEF_FILES["currents"]), None),
+        (Path(data_path, FILE_NAMES["currents"]), None),
         (Path(data_path, "lstcurr_UVW_cte.pre"), 1),
     ],
 )
@@ -165,7 +165,7 @@ def test_TeseoCurrents(path, dt_cte):
 @pytest.mark.parametrize(
     "path, dt_cte",
     [
-        (Path(data_path, DEF_FILES["winds"]), None),
+        (Path(data_path, FILE_NAMES["winds"]), None),
         (Path(data_path, "lstwinds_cte.pre"), 1),
     ],
 )
@@ -190,7 +190,7 @@ def test_TeseoWinds(path, dt_cte):
 @pytest.mark.parametrize(
     "path, dt_cte",
     [
-        (Path(data_path, DEF_FILES["waves"]), None),
+        (Path(data_path, FILE_NAMES["waves"]), None),
         (Path(data_path, "lstwaves_cte.pre"), 1),
     ],
 )

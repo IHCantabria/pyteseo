@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import pandas as pd
 
-from pyteseo.defaults import DEF_COORDS, DEF_PATTERNS
+from pyteseo.defaults import COORDINATE_NAMES, FILE_PATTERNS
 
 
 # TODO - extend addition of utc_datetime to all the exportations
@@ -37,7 +37,7 @@ def export_grids(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_PATTERNS["export_grids"].replace(".*", f".{file_format}"),
+            FILE_PATTERNS["export_grids"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
@@ -49,9 +49,9 @@ def export_grids(
         elif file_format == "nc":
             df = df.set_index(
                 [
-                    DEF_COORDS["t"],
-                    DEF_COORDS["x"],
-                    DEF_COORDS["y"],
+                    COORDINATE_NAMES["t"],
+                    COORDINATE_NAMES["x"],
+                    COORDINATE_NAMES["y"],
                 ]
             )
             ds = df.to_xarray().drop_vars("spill_id")

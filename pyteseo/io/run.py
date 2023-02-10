@@ -1,8 +1,8 @@
-from pyteseo.defaults import DEF_RUN_PARAMETERS
+from pyteseo.defaults import RUN_MAIN_PARAMETERS
 
 
 def _complete_run_default_parameters(user_parameters) -> dict:
-    return add_default_parameters(user_parameters, DEF_RUN_PARAMETERS)
+    return add_default_parameters(user_parameters, RUN_MAIN_PARAMETERS)
 
 
 def add_default_parameters(d, d_defaults):

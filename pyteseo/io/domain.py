@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pyteseo.defaults import DEF_PATTERNS
+from pyteseo.defaults import FILE_PATTERNS
 from pyteseo.io.utils import _check_lonlat_range, _check_lonlat_soting
 
 
@@ -189,7 +189,7 @@ def write_coastline(df: pd.DataFrame, path: str) -> None:
 def _write_polygons(
     df: pd.DataFrame,
     dir_path: str,
-    filename_pattern: str = DEF_PATTERNS["polygons"],
+    filename_pattern: str = FILE_PATTERNS["polygons"],
 ) -> None:
     """Write polygons from a coastline DataFrame
 

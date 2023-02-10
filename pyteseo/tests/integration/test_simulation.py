@@ -38,10 +38,10 @@ def test_drifter(setup_teardown):
         "lstwaves.pre",
     ]
 
-    if not Path(tmp_path, "inputs").exists():
-        Path(tmp_path, "inputs").mkdir()
+    if not Path(tmp_path, "input").exists():
+        Path(tmp_path, "input").mkdir()
     for src_file, dst_file in zip(input_files, input_files_dst):
-        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
+        copyfile(Path(data_path, src_file), Path(tmp_path, "input", dst_file))
 
     job = TeseoWrapper(path=tmp_path)
     job.load_inputs()
@@ -92,10 +92,10 @@ def test_oil(setup_teardown):
         "lstwaves.pre",
     ]
 
-    if not Path(tmp_path, "inputs").exists():
-        Path(tmp_path, "inputs").mkdir()
+    if not Path(tmp_path, "input").exists():
+        Path(tmp_path, "input").mkdir()
     for src_file, dst_file in zip(input_files, input_files_dst):
-        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
+        copyfile(Path(data_path, src_file), Path(tmp_path, "input", dst_file))
 
     job = TeseoWrapper(path=tmp_path)
     job.load_inputs()
@@ -156,10 +156,10 @@ def test_hns(setup_teardown):
         "lstwaves.pre",
     ]
 
-    if not Path(tmp_path, "inputs").exists():
-        Path(tmp_path, "inputs").mkdir()
+    if not Path(tmp_path, "input").exists():
+        Path(tmp_path, "input").mkdir()
     for src_file, dst_file in zip(input_files, input_files_dst):
-        copyfile(Path(data_path, src_file), Path(tmp_path, "inputs", dst_file))
+        copyfile(Path(data_path, src_file), Path(tmp_path, "input", dst_file))
 
     job = TeseoWrapper(path=tmp_path)
     job.load_inputs()

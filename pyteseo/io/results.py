@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from pyteseo.defaults import DEF_FILES, DEF_PATTERNS, DEF_TESEO_RESULTS_MAP
+from pyteseo.defaults import FILE_NAMES, FILE_PATTERNS, RESULTS_MAP
 
 
 # # 4. RESULTS
 def read_particles_results(
     dir_path: str,
-    file_pattern: str = DEF_PATTERNS["teseo_particles"],
+    file_pattern: str = FILE_PATTERNS["teseo_particles"],
 ) -> pd.DataFrame:
     """Load TESEO's particles results files "*_properties_*.txt" to DataFrame
 
@@ -46,7 +46,7 @@ def read_particles_results(
 
 def read_properties_results(
     dir_path: str,
-    file_pattern: str = DEF_PATTERNS["teseo_properties"],
+    file_pattern: str = FILE_PATTERNS["teseo_properties"],
 ) -> pd.DataFrame:
     """Load TESEO's propierties results files "*_properties_*.txt" to DataFrame
 
@@ -84,8 +84,8 @@ def read_properties_results(
 
 def read_grids_results(
     dir_path: str,
-    file_pattern: str = DEF_PATTERNS["teseo_grids"],
-    fullgrid_filename: str = DEF_FILES["teseo_grid_coordinates"],
+    file_pattern: str = FILE_PATTERNS["teseo_grids"],
+    fullgrid_filename: str = FILE_NAMES["teseo_grid_coordinates"],
 ) -> pd.DataFrame:
 
     """Load TESEO's grids results files "*_grid_*.txt" to DataFrame
@@ -136,7 +136,7 @@ def read_grids_results(
 
 
 def _rename_results_names(
-    df: pd.DataFrame, coordname_map: dict = DEF_TESEO_RESULTS_MAP
+    df: pd.DataFrame, coordname_map: dict = RESULTS_MAP
 ) -> pd.DataFrame:
     """Rename variables according with map in default_names.json
 

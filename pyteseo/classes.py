@@ -3,7 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from pyteseo.defaults import DEF_COORDS, DEF_DIRS, DEF_FILES, DEF_PATTERNS, DEF_VARS
+from pyteseo.defaults import (
+    COORDINATE_NAMES,
+    DIRECTORY_NAMES,
+    FILE_NAMES,
+    FILE_PATTERNS,
+    VARIABLE_NAMES,
+)
 from pyteseo.io.cfg import (
     complete_cfg_default_parameters,
     check_user_minimum_parameters,
@@ -32,7 +38,7 @@ class TeseoWrapper:
         if not path.exists():
             path.mkdir(parents=True)
 
-        input_dir = Path(path, DEF_DIRS["inputs"])
+        input_dir = Path(path, DIRECTORY_NAMES["input"])
         if not input_dir.exists():
             input_dir.mkdir(parents=True)
 
@@ -57,21 +63,21 @@ class TeseoWrapper:
         """
         input_dir = Path(self.input_dir).resolve()
         print("Loading grid...")
-        if Path(input_dir, DEF_FILES["grid"]).exists():
-            self.grid = Grid(Path(input_dir, DEF_FILES["grid"]))
+        if Path(input_dir, FILE_NAMES["grid"]).exists():
+            self.grid = Grid(Path(input_dir, FILE_NAMES["grid"]))
         else:
             raise FileNotFoundError("Grid-file is mandatory!")
 
         print("Loading coastline...")
-        if Path(input_dir, DEF_FILES["coastline"]).exists():
-            self.coastline = Coastline(Path(input_dir, DEF_FILES["coastline"]))
+        if Path(input_dir, FILE_NAMES["coastline"]).exists():
+            self.coastline = Coastline(Path(input_dir, FILE_NAMES["coastline"]))
         else:
             print("No coastline defined!")
 
         print("Loading currents...")
-        if Path(input_dir, DEF_FILES["currents"]).exists():
+        if Path(input_dir, FILE_NAMES["currents"]).exists():
             self.currents = Currents(
-                Path(input_dir, DEF_FILES["currents"]), currents_dt_cte
+                Path(input_dir, FILE_NAMES["currents"]), currents_dt_cte
             )
         else:
             print("No currents defined, creating null currents...")
@@ -79,16 +85,16 @@ class TeseoWrapper:
             write_null_forcing(input_dir, forcing_type="currents")
 
         print("Loading winds...")
-        if Path(input_dir, DEF_FILES["winds"]).exists():
-            self.winds = Winds(Path(input_dir, DEF_FILES["winds"]), winds_dt_cte)
+        if Path(input_dir, FILE_NAMES["winds"]).exists():
+            self.winds = Winds(Path(input_dir, FILE_NAMES["winds"]), winds_dt_cte)
         else:
             print("No winds defined, creating null winds...")
             self.winds = None
             write_null_forcing(input_dir, forcing_type="winds")
 
         print("Loading waves...")
-        if Path(input_dir, DEF_FILES["waves"]).exists():
-            self.waves = Waves(Path(input_dir, DEF_FILES["waves"]), waves_dt_cte)
+        if Path(input_dir, FILE_NAMES["waves"]).exists():
+            self.waves = Waves(Path(input_dir, FILE_NAMES["waves"]), waves_dt_cte)
         else:
             print("No waves defined, creating null waves...")
             self.waves = None
@@ -102,7 +108,7 @@ class TeseoWrapper:
         forcing_parameters = self._forcing_parameters
         file_parameters = self._file_parameters
 
-        self.cfg_path = str(Path(self.path, DEF_PATTERNS["cfg"].replace("*", "teseo")))
+        self.cfg_path = str(Path(self.path, FILE_PATTERNS["cfg"].replace("*", "teseo")))
         write_cfg(
             path=self.cfg_path,
             file_parameters=file_parameters,
@@ -121,7 +127,7 @@ class TeseoWrapper:
 
         run_parameters = _complete_run_default_parameters(user_parameters)
         n_coastal_polygons = self.coastline.n_polygons
-        self.run_path = str(Path(self.path, DEF_PATTERNS["run"].replace("*", "teseo")))
+        self.run_path = str(Path(self.path, FILE_PATTERNS["run"].replace("*", "teseo")))
         write_run(
             path=self.run_path,
             run_parameters=run_parameters,
@@ -132,7 +138,7 @@ class TeseoWrapper:
     @property
     def _file_parameters(self) -> dict:
         d = {}
-        d["inputs_directory"] = DEF_DIRS["inputs"] + "/"
+        d["inputs_directory"] = DIRECTORY_NAMES["input"] + "/"
         d["grid_filename"] = Path(self.grid.path).name
         return d
 
@@ -186,10 +192,10 @@ class Grid:
         self.dy = _calculate_dy(df)
         self.nx = _calculate_nx(df)
         self.ny = _calculate_ny(df)
-        self.x_min = df[DEF_COORDS["x"]].min()
-        self.x_max = df[DEF_COORDS["x"]].max()
-        self.y_min = df[DEF_COORDS["y"]].min()
-        self.y_max = df[DEF_COORDS["y"]].max()
+        self.x_min = df[COORDINATE_NAMES["x"]].min()
+        self.x_max = df[COORDINATE_NAMES["x"]].max()
+        self.y_min = df[COORDINATE_NAMES["y"]].min()
+        self.y_max = df[COORDINATE_NAMES["y"]].max()
 
     @property
     def load(self):
@@ -211,10 +217,10 @@ class Coastline:
         self.calculate_variables(df)
 
     def calculate_variables(self, df):
-        self.x_min = df[DEF_COORDS["x"]].min()
-        self.x_max = df[DEF_COORDS["x"]].max()
-        self.y_min = df[DEF_COORDS["y"]].min()
-        self.y_max = df[DEF_COORDS["y"]].max()
+        self.x_min = df[COORDINATE_NAMES["x"]].min()
+        self.x_max = df[COORDINATE_NAMES["x"]].max()
+        self.y_min = df[COORDINATE_NAMES["y"]].min()
+        self.y_max = df[COORDINATE_NAMES["y"]].max()
         self.n_polygons = len(df.index.get_level_values("polygon").unique())
 
     @property
@@ -234,7 +240,7 @@ class Currents:
             dt_cte (float, optional): time step for currents if spatially cte. Defaults to 1.0.
         """
         self.forcing_type = "currents"
-        self.varnames = DEF_VARS[self.forcing_type]
+        self.varnames = VARIABLE_NAMES[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
         if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
@@ -276,7 +282,7 @@ class Winds:
             dt_cte (float, optional): time step for winds if spatially cte. Defaults to 1.0.
         """
         self.forcing_type = "winds"
-        self.varnames = DEF_VARS[self.forcing_type]
+        self.varnames = VARIABLE_NAMES[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
         if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
@@ -318,7 +324,7 @@ class Waves:
             dt_cte (float, optional): time step for waves if spatially cte. Defaults to 1.0.
         """
         self.forcing_type = "waves"
-        self.varnames = DEF_VARS[self.forcing_type]
+        self.varnames = VARIABLE_NAMES[self.forcing_type]
         self.path = str(Path(lst_path).resolve())
 
         if len(pd.read_csv(self.path, delimiter="\s+").columns) != 1:
@@ -350,7 +356,7 @@ class Waves:
         return f"{self.__class__.__name__}(lst_path={self.path})"
 
 
-def _calculate_dx(df: pd.DataFrame, coordname: str = DEF_COORDS["x"]):
+def _calculate_dx(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["x"]):
     dx = np.unique(np.diff(df[coordname].unique()))
     if len(dx) == 1:
         return dx[0]
@@ -359,7 +365,7 @@ def _calculate_dx(df: pd.DataFrame, coordname: str = DEF_COORDS["x"]):
         return dx[0]
 
 
-def _calculate_dy(df: pd.DataFrame, coordname: str = DEF_COORDS["y"]):
+def _calculate_dy(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["y"]):
     dy = np.unique(np.diff(df[coordname].unique()))
     if len(dy) == 1:
         return dy[0]
@@ -368,7 +374,7 @@ def _calculate_dy(df: pd.DataFrame, coordname: str = DEF_COORDS["y"]):
         return dy[0]
 
 
-def _calculate_dt(df: pd.DataFrame, coordname: str = DEF_COORDS["t"]):
+def _calculate_dt(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["t"]):
     dt = np.unique(np.diff(df[coordname].unique()))
     if len(dt) == 1:
         return dt[0]
@@ -377,13 +383,13 @@ def _calculate_dt(df: pd.DataFrame, coordname: str = DEF_COORDS["t"]):
         return dt[0]
 
 
-def _calculate_nx(df: pd.DataFrame, coordname: str = DEF_COORDS["x"]):
+def _calculate_nx(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["x"]):
     return len(df[coordname].unique())
 
 
-def _calculate_ny(df: pd.DataFrame, coordname: str = DEF_COORDS["y"]):
+def _calculate_ny(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["y"]):
     return len(df[coordname].unique())
 
 
-def _calculate_nt(df: pd.DataFrame, coordname: str = DEF_COORDS["t"]):
+def _calculate_nt(df: pd.DataFrame, coordname: str = COORDINATE_NAMES["t"]):
     return len(df[coordname].unique())

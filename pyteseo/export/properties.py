@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import pandas as pd
 
-from pyteseo.defaults import DEF_PATTERNS
+from pyteseo.defaults import FILE_PATTERNS
 
 
 # TODO - extend addition of utc_datetime to all the exportations
@@ -32,7 +32,7 @@ def export_properties(
     file_format = file_format.lower()
     if file_format not in allowed_formats:
         raise ValueError(f"Invalid format. Allowed formats {allowed_formats}")
-    filename_pattern = DEF_PATTERNS["export_properties"].replace(
+    filename_pattern = FILE_PATTERNS["export_properties"].replace(
         ".*", f".{file_format}"
     )
     path_pattern = output_dir / filename_pattern

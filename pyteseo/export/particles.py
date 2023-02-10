@@ -5,7 +5,7 @@ from geojson import Feature, FeatureCollection, MultiPoint, dump
 from datetime import datetime, timedelta
 import pandas as pd
 
-from pyteseo.defaults import DEF_PATTERNS
+from pyteseo.defaults import FILE_PATTERNS
 
 
 # TODO - extend addition of utc_datetime to all the exportations
@@ -41,7 +41,7 @@ def export_particles(
     else:
         output_path_pattern = Path(
             output_dir,
-            DEF_PATTERNS["export_particles"].replace(".*", f".{file_format}"),
+            FILE_PATTERNS["export_particles"].replace(".*", f".{file_format}"),
         )
 
     for spill_id, df in df.groupby("spill_id"):
