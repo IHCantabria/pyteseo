@@ -10,7 +10,7 @@ from pyteseo.io.cfg import (
     convert_spill_points_to_df,
     get_substances_df,
 )
-from pyteseo.classes import check_user_minimum_parameters
+from pyteseo.wrapper import check_user_minimum_parameters
 
 
 data_path = Path(__file__).parent.parent / "data"

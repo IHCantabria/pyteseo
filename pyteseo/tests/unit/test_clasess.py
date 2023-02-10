@@ -9,9 +9,9 @@ from pyteseo.classes import (
     Grid,
     Waves,
     Winds,
-    TeseoWrapper,
     Coastline,
 )
+from pyteseo.wrapper import TeseoWrapper
 from pyteseo.defaults import FILE_NAMES
 
 data_path = Path(__file__).parent.parent / "data"

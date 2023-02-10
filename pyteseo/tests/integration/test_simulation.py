@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from pyteseo.__init__ import __version__ as v
-from pyteseo.classes import TeseoWrapper
+from pyteseo.wrapper import TeseoWrapper
 
 
 data_path = Path(__file__).parent.parent / "data"
