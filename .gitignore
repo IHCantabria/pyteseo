@@ -12,6 +12,8 @@ tmp_*/
 dist/
 docs/_build
 .vscode/
+pyteseo/data/bin/
+
 
 # Files
 *.nc
