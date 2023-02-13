@@ -10,7 +10,7 @@ from pyteseo.defaults import (
     FILE_NAMES,
     FILE_PATTERNS,
 )
-from pyteseo.io.cfg import complete_cfg_default_parameters, write_cfg
+from pyteseo.io.cfg import generate_parameters_for_cfg, write_cfg
 from pyteseo.io.forcings import write_null_forcing
 from pyteseo.io.results import (
     read_grids_results,
@@ -117,7 +117,7 @@ class TeseoWrapper:
 
         check_user_minimum_parameters(user_parameters)
         print("setting up TESEO's cfg-file...")
-        cfg_parameters = complete_cfg_default_parameters(user_parameters)
+        cfg_parameters = generate_parameters_for_cfg(user_parameters)
         forcing_parameters = self._forcing_parameters
         file_parameters = self._file_parameters
 
@@ -125,8 +125,8 @@ class TeseoWrapper:
             Path(self.path, FILE_PATTERNS["cfg"].replace("*", self.simulation_keyword))
         )
         write_cfg(
-            path=self.cfg_path,
-            file_parameters=file_parameters,
+            output_path=self.cfg_path,
+            filename_parameters=file_parameters,
             forcing_parameters=forcing_parameters,
             simulation_parameters=cfg_parameters,
         )

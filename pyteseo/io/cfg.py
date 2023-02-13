@@ -1,12 +1,14 @@
+from datetime import datetime
+
 import pandas as pd
 
 from pyteseo.defaults import (
-    CFG_MAIN_PARAMETERS,
-    CFG_PROCESSES_PARAMETERS,
-    CFG_SPILL_POINT_PARAMETERS,
     CFG_KEYS_FOR_TABLE_1,
     CFG_KEYS_FOR_TABLE_2,
     CFG_KEYS_FOR_TABLE_3,
+    CFG_MAIN_PARAMETERS,
+    CFG_PROCESSES_PARAMETERS,
+    CFG_SPILL_POINT_PARAMETERS,
 )
 from pyteseo.io.substances import import_local
 from pyteseo.io.utils import _add_default_parameters
@@ -28,7 +30,15 @@ from pyteseo.io.utils import _add_default_parameters
 # simulation[type, dim, duration, dt]
 
 
-def complete_cfg_default_parameters(user_parameters) -> dict:
+def generate_parameters_for_cfg(user_parameters: dict) -> dict:
+    """generates parameters needed to fullfil TESEO's cfg-file
+
+    Args:
+        user_parameters (dict): Parameters defined by the user
+
+    Returns:
+        dict: parameters needed to fullfil cfg-file
+    """
 
     CFG_MAIN_PARAMETERS.update(
         CFG_PROCESSES_PARAMETERS[user_parameters["substance_type"]]
@@ -48,8 +58,17 @@ def complete_cfg_default_parameters(user_parameters) -> dict:
 
 
 def add_hours_to_release_to_spill_points(
-    spill_points, forcing_init_datetime
+    spill_points: list[dict], forcing_init_datetime: datetime
 ) -> list[dict]:
+    """add parameter 'hours_to_release' as the difference between the 'forcing init time' and the 'release time' of each spill point
+
+    Args:
+        spill_points (list[dict]): list of spill point definitions
+        forcing_init_datetime (datetime): initial time of the forcings (real initial reference time of TESEO's simulations)
+
+    Returns:
+        list[dict]: spill_points updated with 'hours_to_release'
+    """
     for i, d in enumerate(spill_points):
         d["hours_to_release"] = (
             d["release_time"] - forcing_init_datetime
@@ -60,16 +79,37 @@ def add_hours_to_release_to_spill_points(
 
 
 def add_spill_point_default_parameters(
-    spill_points, d_defaults=CFG_SPILL_POINT_PARAMETERS
+    spill_points: list[dict], d_defaults: dict[str, any] = CFG_SPILL_POINT_PARAMETERS
 ) -> list[dict]:
+    """complete spill point definitions with default parameters
+
+    Args:
+        spill_points (list[dict]): spill point definitions
+        d_defaults (dict[str, any], optional): defaults to be added. Defaults to CFG_SPILL_POINT_PARAMETERS.
+
+    Returns:
+        list[dict]: spill_points updated with the defaults passed in 'd_defaults'
+    """
     for i, d in enumerate(spill_points):
         spill_points[i] = _add_default_parameters(d, d_defaults)
 
     return spill_points
 
 
-def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
+def write_cfg(
+    output_path: str,
+    filename_parameters: dict[str, str],
+    forcing_parameters: dict[str, any],
+    simulation_parameters: dict[str, any],
+):
+    """create f-string with the complete TESEO's cfg-file
 
+    Args:
+        output_path (str): path to write the file
+        filename_parameters (dict[str, str]): filenames required
+        forcing_parameters (dict[str, any]): forcings parameters required
+        simulation_parameters (dict[str, any]): rest of parameters required
+    """
     release_type = translate_release_type(simulation_parameters["release_type"])
     substance_type = translate_substance_type(simulation_parameters["substance_type"])
     spreading_formulation = translate_spreading_formulation(
@@ -90,7 +130,7 @@ def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
 * MALLA:
 *--------------------------------------------------
 * Nombre_malla
-{file_parameters["grid_filename"]}
+{filename_parameters["grid_filename"]}
 * Tipo malla(1:xyz; 2:grid)
 {1}
 * Origen_x(°) Origen_y(°) Delta_x(°) Delta_y(°) Delta_z Celda_x Celda_y Celda_z LatMedia
@@ -99,7 +139,7 @@ def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
 * MALLA DE PROBABILIDADES o CONCENTRACIONES: (SI GRABA_CONC=1)
 *--------------------------------------------------------------------------------------
 * Nombre_malla
-{file_parameters["grid_filename"]}
+{filename_parameters["grid_filename"]}
 * MALLA_CONCS.VS.MALLA_MODELO (0:Malla_concs.NE.Malla_modelo; 1:Malla_concs.EQ.Malla_modelo)
 {0}
 * Tipo malla(1:xyz; 2:grid)
@@ -204,29 +244,41 @@ def write_cfg(path, file_parameters, forcing_parameters, simulation_parameters):
 * DIRECTORIO DATOS:
 *------------------------------------------------------
 * SI DIRECTORIO_DATOS_EJECUCION_MODELO=2 -> AÑADIR NUEVA RUTA(); SI DIRECTORIO=1->AÑADIR la ruta no cambia
-{file_parameters["inputs_directory"]}
+{filename_parameters["inputs_directory"]}
 """
 
-    with open(path, "w", encoding="utf-8") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(cfg_txt)
-    return path
+    return output_path
 
 
 def create_tables(
-    spill_points,
-    substance_type,
-    seawater_temperature,
-    seawater_density,
-    air_temperature,
-    suspended_solid_concentration,
-):
+    spill_points: list[dict],
+    substance_type: str,
+    seawater_temperature: float,
+    seawater_density: float,
+    air_temperature: float,
+    suspended_solid_concentration: float,
+) -> tuple[str, str, str]:
+    """create tables to define spill point related data in cfg-file
 
-    df_spill_points = convert_spill_points_to_df(spill_points)
-    df_substances = get_substances_df(
+    Args:
+        spill_points (list[dict]): spill point definitions
+        substance_type (str): type of the susbtances
+        seawater_temperature (float): value for seawater temperature (º)
+        seawater_density (float): value for seawater density (º)
+        air_temperature (float): value for air temperature (º)
+        suspended_solid_concentration (float): value for suspended solid concentration (kg/m3)
+
+    Returns:
+        tuple[str, str, str]: tables required in cfg-file
+    """
+    df_spill_points = create_spill_points_df(spill_points)
+    df_substances = create_substances_df(
         [d["substance"] for d in spill_points if "substance" in d.keys()],
         substance_type,
     )
-    df_climate_vars = get_climate_df(
+    df_climate_vars = create_climate_df(
         len(spill_points),
         seawater_temperature,
         seawater_density,
@@ -262,7 +314,7 @@ def create_tables(
     )
 
 
-def convert_spill_points_to_df(spill_points: list[dict]) -> pd.DataFrame:
+def create_spill_points_df(spill_points: list[dict]) -> pd.DataFrame:
     dfs = []
     for d in spill_points:
         dfs.append(pd.DataFrame([d]))
@@ -271,7 +323,9 @@ def convert_spill_points_to_df(spill_points: list[dict]) -> pd.DataFrame:
     return df
 
 
-def get_substances_df(substance_names, substance_type, source="local") -> pd.DataFrame:
+def create_substances_df(
+    substance_names, substance_type, source="local"
+) -> pd.DataFrame:
     if not substance_names:
         return pd.DataFrame([])
     else:
@@ -291,7 +345,7 @@ def get_substances_df(substance_names, substance_type, source="local") -> pd.Dat
         return df
 
 
-def get_climate_df(
+def create_climate_df(
     n_spill_points,
     seawater_temperature,
     seawater_density,
