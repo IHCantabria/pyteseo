@@ -2,19 +2,19 @@ from pyteseo.defaults import RUN_MAIN_PARAMETERS
 from pyteseo.io.utils import _add_default_parameters
 
 
-def complete_run_default_parameters(user_parameters) -> dict:
+def generate_parameters_for_run(user_parameters) -> dict:
     return _add_default_parameters(user_parameters, RUN_MAIN_PARAMETERS)
 
 
 def write_run(path, run_parameters, first_time_saved, n_coastal_polygons):
 
-    environment = translate_environment(run_parameters["environment"])
-    mode = translate_mode(run_parameters["mode"])
-    motion = translate_motion(run_parameters["motion"])
-    beaching_algorithm = translate_beaching_algorithm(
+    environment = _translate_environment(run_parameters["environment"])
+    mode = _translate_mode(run_parameters["mode"])
+    motion = _translate_motion(run_parameters["motion"])
+    beaching_algorithm = _translate_beaching_algorithm(
         run_parameters["beaching_algorithm"]
     )
-    execution_scheme = translate_execution_scheme(run_parameters["execution_scheme"])
+    execution_scheme = _translate_execution_scheme(run_parameters["execution_scheme"])
 
     run_txt = f"""*--------------------------------------------------
 * FICHERO RUN PARA TTEREG.F90
@@ -60,7 +60,7 @@ def write_run(path, run_parameters, first_time_saved, n_coastal_polygons):
         f.write(run_txt)
 
 
-def translate_environment(keyword):
+def _translate_environment(keyword):
     if keyword.lower() == "marine":
         return 1
     elif keyword.lower() == "riverine":
@@ -69,7 +69,7 @@ def translate_environment(keyword):
         raise TypeError(f"invalid parameter in run-file (environment = {keyword})")
 
 
-def translate_mode(keyword):
+def _translate_mode(keyword):
     if keyword.lower() == "2d":
         return 1
     elif keyword.lower() == "3d":
@@ -78,7 +78,7 @@ def translate_mode(keyword):
         raise TypeError(f"invalid parameter in run-file (mode = {keyword})")
 
 
-def translate_motion(keyword):
+def _translate_motion(keyword):
     if keyword.lower() in ["forward", "forwards"]:
         return 1
     elif keyword.lower() in ["backward", "backwards", "backtracking"]:
@@ -87,7 +87,7 @@ def translate_motion(keyword):
         raise TypeError(f"invalid parameter in run-file (motion = {keyword})")
 
 
-def translate_beaching_algorithm(keyword):
+def _translate_beaching_algorithm(keyword):
     if keyword.lower() in ["regional", "low"]:
         return 1
     elif keyword.lower() in ["local", "high"]:
@@ -98,7 +98,7 @@ def translate_beaching_algorithm(keyword):
         )
 
 
-def translate_execution_scheme(keyword):
+def _translate_execution_scheme(keyword):
     if keyword.lower() == "euler":
         return 1
     elif keyword.lower() == "runge-kutta":

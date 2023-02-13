@@ -17,7 +17,7 @@ from pyteseo.io.results import (
     read_particles_results,
     read_properties_results,
 )
-from pyteseo.io.run import complete_run_default_parameters, write_run
+from pyteseo.io.run import generate_parameters_for_run, write_run
 
 
 class TeseoWrapper:
@@ -142,7 +142,7 @@ class TeseoWrapper:
                 ]
             )
 
-        run_parameters = complete_run_default_parameters(user_parameters)
+        run_parameters = generate_parameters_for_run(user_parameters)
         n_coastal_polygons = self.coastline.n_polygons
         self.run_path = str(
             Path(self.path, FILE_PATTERNS["run"].replace("*", self.simulation_keyword))

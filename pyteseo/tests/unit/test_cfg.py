@@ -7,8 +7,8 @@ import pytest
 
 from pyteseo.__init__ import __version__ as v
 from pyteseo.io.cfg import (
-    create_spill_points_df,
-    create_substances_df,
+    _create_spill_points_df,
+    _create_substances_df,
 )
 from pyteseo.wrapper import check_user_minimum_parameters
 
@@ -114,7 +114,7 @@ def test_check_minimum_cfg_parameters(user_parameters):
 
 
 def test_convert_spill_points_to_df():
-    df = create_spill_points_df(
+    df = _create_spill_points_df(
         [
             {
                 "release_time": datetime.utcnow().replace(
@@ -148,6 +148,6 @@ def test_convert_spill_points_to_df():
 def test_get_substance_df(
     substance_names=["oil_example", "oil_example"], substance_type="oil"
 ):
-    substance_df = create_substances_df(substance_names, substance_type)
+    substance_df = _create_substances_df(substance_names, substance_type)
     assert len(substance_df) == len(substance_names)
     assert substance_df["density"].values[0] == 816

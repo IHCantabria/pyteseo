@@ -110,13 +110,13 @@ def write_cfg(
         forcing_parameters (dict[str, any]): forcings parameters required
         simulation_parameters (dict[str, any]): rest of parameters required
     """
-    release_type = translate_release_type(simulation_parameters["release_type"])
-    substance_type = translate_substance_type(simulation_parameters["substance_type"])
-    spreading_formulation = translate_spreading_formulation(
+    release_type = _translate_release_type(simulation_parameters["release_type"])
+    substance_type = _translate_substance_type(simulation_parameters["substance_type"])
+    spreading_formulation = _translate_spreading_formulation(
         simulation_parameters["spreading_formulation"]
     )
 
-    table1, table2, table3 = create_tables(
+    table1, table2, table3 = _create_spill_points_tables(
         simulation_parameters["spill_points"],
         simulation_parameters["substance_type"],
         simulation_parameters["seawater_temperature"],
@@ -252,7 +252,7 @@ def write_cfg(
     return output_path
 
 
-def create_tables(
+def _create_spill_points_tables(
     spill_points: list[dict],
     substance_type: str,
     seawater_temperature: float,
@@ -273,12 +273,12 @@ def create_tables(
     Returns:
         tuple[str, str, str]: tables required in cfg-file
     """
-    df_spill_points = create_spill_points_df(spill_points)
-    df_substances = create_substances_df(
+    df_spill_points = _create_spill_points_df(spill_points)
+    df_substances = _create_substances_df(
         [d["substance"] for d in spill_points if "substance" in d.keys()],
         substance_type,
     )
-    df_climate_vars = create_climate_df(
+    df_climate_vars = _create_climate_df(
         len(spill_points),
         seawater_temperature,
         seawater_density,
@@ -314,7 +314,7 @@ def create_tables(
     )
 
 
-def create_spill_points_df(spill_points: list[dict]) -> pd.DataFrame:
+def _create_spill_points_df(spill_points: list[dict]) -> pd.DataFrame:
     dfs = []
     for d in spill_points:
         dfs.append(pd.DataFrame([d]))
@@ -323,7 +323,7 @@ def create_spill_points_df(spill_points: list[dict]) -> pd.DataFrame:
     return df
 
 
-def create_substances_df(
+def _create_substances_df(
     substance_names, substance_type, source="local"
 ) -> pd.DataFrame:
     if not substance_names:
@@ -345,7 +345,7 @@ def create_substances_df(
         return df
 
 
-def create_climate_df(
+def _create_climate_df(
     n_spill_points,
     seawater_temperature,
     seawater_density,
@@ -365,7 +365,7 @@ def create_climate_df(
     return df
 
 
-def translate_spreading_formulation(keyword):
+def _translate_spreading_formulation(keyword):
     if keyword.lower() == "adios2":
         return 1
     elif keyword.lower() == "lehr":
@@ -376,7 +376,7 @@ def translate_spreading_formulation(keyword):
         raise ValueError("Invalid spreading formulation")
 
 
-def translate_release_type(keyword):
+def _translate_release_type(keyword):
     if keyword.lower() == "instantaneous":
         return 1
     elif keyword.lower() == "continuous":
@@ -385,7 +385,7 @@ def translate_release_type(keyword):
         raise ValueError("Invalid release type")
 
 
-def translate_substance_type(keyword):
+def _translate_substance_type(keyword):
     if keyword.lower() == "drifter":
         return 1
     elif keyword.lower() == "oil":
