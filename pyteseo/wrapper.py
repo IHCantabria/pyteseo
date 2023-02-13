@@ -112,7 +112,7 @@ class TeseoWrapper:
         print("DONE!\n")
 
     def setup(self, user_parameters: dict[str, any]):
-        """create TESEO's configuration files (*.cfg and *.run)
+        """create TESEO's configuration files (cfg and run)
 
         Args:
             user_parameters (dict[str, any]): parameters definde by the user to configure the simulation
@@ -162,10 +162,10 @@ class TeseoWrapper:
         self.execute_simulation()
 
     def check_files(self):
-        """check minimum files required
+        """check if minimum files required exists
 
         Raises:
-            FileNotFoundError: If required file is not found
+            FileNotFoundError: if any file is not found
         """
         for path in [
             self.grid.path,
@@ -178,13 +178,13 @@ class TeseoWrapper:
                 raise FileNotFoundError(path)
 
     def prepare_teseo_binary(self, teseo_binary_path: str):
-        """copy teseo binary to the simulation folder
+        """copy TESEO model binary to simulation directory
 
         Args:
-            teseo_binary_path (str): path to the binary of TESEO
+            teseo_binary_path (str): path to the binary
 
         Raises:
-            FileNotFoundError: if the file is not found
+            FileNotFoundError: if binary not founded
         """
         self.teseo_binary_path = Path(self.path, Path(teseo_binary_path).name)
         if Path(teseo_binary_path).exists():
@@ -192,8 +192,8 @@ class TeseoWrapper:
         else:
             raise FileNotFoundError(teseo_binary_path)
 
-    def execute_simulation(self):
-        """triggers the simulation using subprocess"""
+    def execute_simulation(self) -> None:
+        """triggers TESEO simulation process"""
         subprocess.run(
             [f"{self.teseo_binary_path} {self.cfg_path}"], cwd=self.path, check=True
         )
@@ -233,10 +233,10 @@ class TeseoWrapper:
 
 
 def check_user_minimum_parameters(
-    user_parameters,
-    cfg_mandatory_keys=CFG_MAIN_MANDATORY_KEYS,
-    cfg_spill_point_mandatory_keys=CFG_SPILL_POINT_MANDATORY_KEYS,
-):
+    user_parameters: dict[str, any],
+    cfg_mandatory_keys: dict[str, any] = CFG_MAIN_MANDATORY_KEYS,
+    cfg_spill_point_mandatory_keys: dict[str, any] = CFG_SPILL_POINT_MANDATORY_KEYS,
+) -> None:
     check_keys(d=user_parameters, mandatory_keys=cfg_mandatory_keys)
     for spill_point in user_parameters["spill_points"]:
         if user_parameters["substance_type"] in ["oil", "hns"]:
@@ -249,7 +249,7 @@ def check_user_minimum_parameters(
             check_keys(d=spill_point, mandatory_keys=cfg_spill_point_mandatory_keys)
 
 
-def check_keys(d, mandatory_keys):
+def check_keys(d, mandatory_keys: list[str]) -> None:
     for key in mandatory_keys:
         if key not in d.keys():
             raise KeyError(f"Mandatory parameter [{key}] not found")
