@@ -86,7 +86,7 @@ def test_TeseoWrapper(input_files, input_files_dst, error, setup_teardown):
     for src_file, dst_file in zip(input_files, input_files_dst):
         copyfile(Path(data_path, src_file), Path(tmp_path, "input", dst_file))
 
-    job = TeseoWrapper(path=tmp_path)
+    job = TeseoWrapper(dir_path=tmp_path)
     assert Path(job.path).exists()
     assert Path(job.input_dir).exists()
 

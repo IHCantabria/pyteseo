@@ -21,25 +21,25 @@ from pyteseo.io.run import complete_run_default_parameters, write_run
 
 
 class TeseoWrapper:
-    def __init__(self, path: str, simulation_keyword: str = "teseo"):
+    def __init__(self, dir_path: str, simulation_keyword: str = "teseo"):
         """wrapper of configuration, execution and postprocess of a TESEO's simulation
 
         Args:
-            path (str): ath to the simulation folder
+            path (str): path to the simulation folder
             simulation_keyword (str, optional): keyword to name simulation files. Defaults to "teseo".
         """
-
         print("\n")
         self.simulation_keyword = simulation_keyword
-        self.create_folder_structure(path)
+        self.path = str(Path(dir_path).resolve())
+        self.create_folder_structure()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
 
-    def create_folder_structure(self, path):
-
+    def create_folder_structure(self):
+        """creates folder structure for TESEO simulation"""
         print("Creating TESEO folder structure...")
-        path = Path(path).resolve()
+        path = Path(self.path)
         if not path.exists():
             path.mkdir(parents=True)
 
@@ -51,10 +51,8 @@ class TeseoWrapper:
         if not output_dir.exists():
             output_dir.mkdir(parents=True)
 
-        self.path = str(path)
         self.input_dir = str(input_dir)
         self.output_dir = str(output_dir)
-
         print(f"DONE! Created @ {self.path}\n")
 
     def load_inputs(
@@ -113,8 +111,12 @@ class TeseoWrapper:
             write_null_forcing(input_dir, forcing_type="waves")
         print("DONE!\n")
 
-    def setup(self, user_parameters: dict):
+    def setup(self, user_parameters: dict[str, any]):
+        """create TESEO's configuration files (*.cfg and *.run)
 
+        Args:
+            user_parameters (dict[str, any]): parameters definde by the user to configure the simulation
+        """
         check_user_minimum_parameters(user_parameters)
         print("setting up TESEO's cfg-file...")
         cfg_parameters = generate_parameters_for_cfg(user_parameters)
@@ -154,11 +156,17 @@ class TeseoWrapper:
         print("run-file created\n")
 
     def run(self):
+        """run TESEO simulation"""
         self.prepare_teseo_binary()
         self.check_files()
         self.execute_simulation()
 
     def check_files(self):
+        """check minimum files required
+
+        Raises:
+            FileNotFoundError: If required file is not found
+        """
         for path in [
             self.grid.path,
             self.path,
@@ -169,7 +177,15 @@ class TeseoWrapper:
             if not Path(path).exists():
                 raise FileNotFoundError(path)
 
-    def prepare_teseo_binary(self, teseo_binary_path):
+    def prepare_teseo_binary(self, teseo_binary_path: str):
+        """copy teseo binary to the simulation folder
+
+        Args:
+            teseo_binary_path (str): path to the binary of TESEO
+
+        Raises:
+            FileNotFoundError: if the file is not found
+        """
         self.teseo_binary_path = Path(self.path, Path(teseo_binary_path).name)
         if Path(teseo_binary_path).exists():
             copyfile(teseo_binary_path, self.teseo_binary_path)
@@ -177,6 +193,7 @@ class TeseoWrapper:
             raise FileNotFoundError(teseo_binary_path)
 
     def execute_simulation(self):
+        """triggers the simulation using subprocess"""
         subprocess.run(
             [f"{self.teseo_binary_path} {self.cfg_path}"], cwd=self.path, check=True
         )
