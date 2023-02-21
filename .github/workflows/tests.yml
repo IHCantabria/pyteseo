@@ -13,9 +13,6 @@ on:
 
 jobs:
   test:
-    environment:
-      CMEMS_username: ${{secrets.CMEMS_username}}
-      CMEMS_password: ${{secrets.CMEMS_password}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -38,4 +35,7 @@ jobs:
         run: pip install "."
 
       - name: Test
+        env:
+          CMEMS_username: ${{ secrets.CMEMS_username }}
+          CMEMS_password: ${{ secrets.CMEMS_password }}
         run: pyteseo-tests
