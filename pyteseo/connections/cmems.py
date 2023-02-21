@@ -13,7 +13,7 @@ def access_global_currents(
     password: str,
     bbox: tuple[float, float, float, float],
     timebox: tuple[datetime, datetime],
-) -> xr.Dataset:
+) -> pd.DataFrame:
     """access to CMEMS GLOBAL and get total currents (circulation + tide + stokes drift)
 
     Args:
@@ -23,7 +23,7 @@ def access_global_currents(
         timebox (tuple[datetime, datetime]): initial_time, end_time
 
     Returns:
-        xr.Dataset: resulting dataset with currents data (u, v)
+        pd.DataFrame: resulting dataframe with currents data (time, lon, lat, u, v)
     """
     opendap_url = (
         "https://nrt.cmems-du.eu/thredds/dodsC/cmems_mod_glo_phy_anfc_merged-uv_PT1H-i"
@@ -32,16 +32,19 @@ def access_global_currents(
 
     cmems = Cmems(username, password)
     ds = cmems.opendap_access(opendap_url)
+    ds = ds.squeeze(drop=True)
     ds = ds.get(varnames)
-    ds = ds.squeeze()
     ds = coords_standarization(ds, "time", "longitude", "latitude")
     ds = spatial_subset(ds, bbox)
     ds = temporal_subset(ds, timebox, buffer=timedelta(hours=1))
     ds = ds.rename(
         {varname: new_varname for varname, new_varname in zip(varnames, ["u", "v"])}
     )
+    ds = ds.resample(time="1H").interpolate("linear")
+    df = ds.to_dataframe().reset_index()
+    df["time"] = (df["time"] - df["time"][0]).dt.total_seconds() / 3600
 
-    return ds
+    return df
 
 
 def access_global_winds(
@@ -49,7 +52,7 @@ def access_global_winds(
     password: str,
     bbox: tuple[float, float, float, float],
     timebox: tuple[datetime, datetime],
-) -> xr.Dataset:
+) -> pd.DataFrame:
     """access to CMEMS GLOBAL L4-SATELLITE winds
 
     Args:
@@ -59,7 +62,7 @@ def access_global_winds(
         timebox (tuple[datetime, datetime]): initial_time, end_time
 
     Returns:
-        xr.Dataset: resulting dataset with winds data (u, v)
+        xr.Dataset: resulting dataframe with winds data (time, lon, lat, u, v)
     """
     opendap_url = "https://nrt.cmems-du.eu/thredds/dodsC/cmems_obs-wind_glo_phy_nrt_l4_0.125deg_PT1H"
     varnames = ["eastward_wind", "northward_wind"]
@@ -72,8 +75,10 @@ def access_global_winds(
     ds = ds.rename(
         {varname: new_varname for varname, new_varname in zip(varnames, ["u", "v"])}
     )
+    df = ds.to_dataframe().reset_index()
+    df["time"] = (df["time"] - df["time"][0]).dt.total_seconds() / 3600
 
-    return ds
+    return df
 
 
 class Cmems:
