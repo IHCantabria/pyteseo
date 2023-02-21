@@ -36,7 +36,8 @@ dependencies = [
     "pytest >=7",
     "lxml",
     "scipy",
-    "python-dotenv"
+    "python-dotenv",
+    "requests"
 ]
 
 
