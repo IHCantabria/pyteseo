@@ -132,7 +132,7 @@ def write_cte_forcing(
     )
 
 
-def write_2d_foring(
+def write_2d_forcing(
     df: pd.DataFrame, dir_path: str, forcing_type: str, nan_value: int = 0
 ) -> None:
     """write lst-file and forcing files per time from a DataFrame with the required variables.

@@ -21,3 +21,7 @@ dependencies:
   - sphinx_rtd_theme
   - pre_commit
   - flake8
+  - pydap
+  - lxml
+  - scipy
+  - python-dotenv

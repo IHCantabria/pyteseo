@@ -7,7 +7,7 @@ import pytest
 from pyteseo.__init__ import __version__ as v
 from pyteseo.io.forcings import (
     read_2d_forcing,
-    write_2d_foring,
+    write_2d_forcing,
     read_cte_forcing,
     write_cte_forcing,
     write_null_forcing,
@@ -62,7 +62,7 @@ def test_read_2d_forcings(file, varnames, error):
 def test_write_2d_forcings(type, in_file, out_file, setup_teardown):
     df = read_2d_forcing(Path(data_path, in_file), type)
 
-    write_2d_foring(df=df, dir_path=tmp_path, forcing_type=type)
+    write_2d_forcing(df=df, dir_path=tmp_path, forcing_type=type)
     assert Path(tmp_path, in_file).exists()
     assert Path(tmp_path, out_file).exists()
 
