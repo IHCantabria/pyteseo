@@ -24,6 +24,8 @@ jobs:
   # Single deploy job since we're just deploying
   deploy:
     environment:
+      CMEMS_username: ${{secrets.CMEMS_username}}
+      CMEMS_password: ${{secrets.CMEMS_password}}
       name: deploy-docs
       url: ${{ steps.deployment.outputs.page_url }}
 

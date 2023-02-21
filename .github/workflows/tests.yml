@@ -13,6 +13,9 @@ on:
 
 jobs:
   test:
+    environment:
+      CMEMS_username: ${{secrets.CMEMS_username}}
+      CMEMS_password: ${{secrets.CMEMS_password}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
